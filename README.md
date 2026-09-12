@@ -29,7 +29,9 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Five enforced release gates covering task success, policy compliance, hallucinations, tool accuracy, and latency
 - Immutable evaluation runs with deterministic 500-case suites and categorized failure evidence
 - Server-enforced promotion controls that block unsafe agent versions
-- Structured browser tools for dispatch simulation, policy updates, plan execution, agent evaluation, promotion, and rollback
+- Evidence-grounded technician diagnostics with ranked hypotheses, cited sources, safety acknowledgement, and parts availability
+- Versioned diagnostic runs, immutable tool execution, escalation, and first-time-fix outcome capture
+- Structured browser tools for dispatch, governance, diagnostic analysis, recommendation acceptance, and outcome recording
 - Responsive desktop and mobile interface
 
 ## Demonstration workflow
@@ -45,6 +47,8 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 9. Select **AgentOps** in the navigation to inspect the operational AI fleet.
 10. Compare the Dispatch Agent and Recovery Agent candidates, run their evaluation suites, and inspect the failed gates.
 11. Promote the passing Dispatch Agent candidate through shadow and production, then test the controlled production rollback.
+12. Select **Diagnostic Copilot** to inspect the linked service case, evidence, and inventory results.
+13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
 
 ## Optimization model
 
@@ -112,8 +116,10 @@ app/api/
   policy/                  Version-guarded policy updates
   recovery-plans/          Role-guarded plan transitions
   agentops/                Fleet snapshot, evaluations, promotions, and rollback
+  diagnostics/             Grounded analysis, technician decisions, escalation, and outcomes
 components/
   agentops-control-tower.tsx  Agent fleet governance and release interface
+  technician-diagnostic-copilot.tsx  Evidence-grounded field diagnostic workflow
 db/
   schema.ts                Indexed operational data model
 drizzle/                   Generated schema migration and metadata
@@ -135,7 +141,7 @@ The implementation demonstrates production-oriented controls, but it is not conn
 - [x] Configurable business policies
 - [x] Persistent operational backend and event pipeline
 - [x] AgentOps monitoring and evaluation control tower
-- [ ] Technician diagnostic copilot
+- [x] Technician diagnostic copilot
 - [ ] Demand forecasting and capacity planning
 - [ ] Enterprise-scale simulation and benchmark report
 

@@ -4,7 +4,7 @@ export const operators = sqliteTable("operators", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),
   displayName: text("display_name").notNull(),
-  role: text("role", { enum: ["dispatcher", "supervisor", "admin"] }).notNull(),
+  role: text("role", { enum: ["technician", "dispatcher", "supervisor", "admin"] }).notNull(),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, table => [uniqueIndex("idx_operators_email").on(table.email)]);
@@ -189,3 +189,115 @@ export const agentIncidents = sqliteTable("agent_incidents", {
   detectedAt: text("detected_at").notNull(),
   resolvedAt: text("resolved_at"),
 }, table => [index("idx_agent_incidents_agent_status").on(table.agentId, table.status), index("idx_agent_incidents_severity_detected").on(table.severity, table.detectedAt)]);
+
+export const diagnosticCases = sqliteTable("diagnostic_cases", {
+  id: text("id").primaryKey(),
+  workOrderId: text("work_order_id").notNull(),
+  technicianId: text("technician_id").notNull(),
+  applianceMake: text("appliance_make").notNull(),
+  applianceModel: text("appliance_model").notNull(),
+  serialTail: text("serial_tail").notNull(),
+  complaint: text("complaint").notNull(),
+  symptomCode: text("symptom_code").notNull(),
+  status: text("status", { enum: ["INTAKE", "ANALYZED", "RECOMMENDATION_ACCEPTED", "RESOLVED", "ESCALATED"] }).notNull(),
+  safetyStatus: text("safety_status", { enum: ["CLEAR", "ACK_REQUIRED", "ACKNOWLEDGED"] }).notNull(),
+  latestRunId: text("latest_run_id").notNull(),
+  selectedRecommendationId: text("selected_recommendation_id"),
+  recordVersion: integer("record_version").notNull().default(1),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [
+  uniqueIndex("idx_diagnostic_cases_work_order").on(table.workOrderId),
+  index("idx_diagnostic_cases_technician_status").on(table.technicianId, table.status),
+  index("idx_diagnostic_cases_status_updated").on(table.status, table.updatedAt),
+]);
+
+export const diagnosticSources = sqliteTable("diagnostic_sources", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  sourceType: text("source_type", { enum: ["SERVICE_PROCEDURE", "TECHNICAL_BULLETIN", "REPAIR_HISTORY", "SAFETY_POLICY"] }).notNull(),
+  applianceMake: text("appliance_make").notNull(),
+  applianceModel: text("appliance_model").notNull(),
+  revision: text("revision").notNull(),
+  referenceCode: text("reference_code").notNull(),
+  summary: text("summary").notNull(),
+  verifiedAt: text("verified_at").notNull(),
+}, table => [
+  uniqueIndex("idx_diagnostic_sources_reference").on(table.referenceCode),
+  index("idx_diagnostic_sources_appliance_type").on(table.applianceMake, table.applianceModel, table.sourceType),
+]);
+
+export const diagnosticRuns = sqliteTable("diagnostic_runs", {
+  id: text("id").primaryKey(),
+  caseId: text("case_id").notNull(),
+  modelVersion: text("model_version").notNull(),
+  status: text("status", { enum: ["COMPLETED", "FAILED"] }).notNull(),
+  groundingRate: real("grounding_rate").notNull(),
+  sourceCount: integer("source_count").notNull(),
+  toolCallCount: integer("tool_call_count").notNull(),
+  createdBy: text("created_by").notNull(),
+  startedAt: text("started_at").notNull(),
+  completedAt: text("completed_at").notNull(),
+}, table => [index("idx_diagnostic_runs_case_completed").on(table.caseId, table.completedAt)]);
+
+export const diagnosticRecommendations = sqliteTable("diagnostic_recommendations", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  caseId: text("case_id").notNull(),
+  rank: integer("rank").notNull(),
+  faultCode: text("fault_code").notNull(),
+  component: text("component").notNull(),
+  confidence: real("confidence").notNull(),
+  rationale: text("rationale").notNull(),
+  verificationStep: text("verification_step").notNull(),
+  partCode: text("part_code"),
+  safetyClass: text("safety_class", { enum: ["STANDARD", "LOCKOUT_REQUIRED", "ESCALATE"] }).notNull(),
+  groundingScore: real("grounding_score").notNull(),
+  evidenceSourceIdsJson: text("evidence_source_ids_json").notNull(),
+  status: text("status", { enum: ["PROPOSED", "ACCEPTED", "REJECTED"] }).notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, table => [
+  uniqueIndex("idx_diagnostic_recommendations_run_rank").on(table.runId, table.rank),
+  index("idx_diagnostic_recommendations_case_status").on(table.caseId, table.status),
+]);
+
+export const partsInventory = sqliteTable("parts_inventory", {
+  id: text("id").primaryKey(),
+  partCode: text("part_code").notNull(),
+  description: text("description").notNull(),
+  location: text("location").notNull(),
+  onHand: integer("on_hand").notNull(),
+  reserved: integer("reserved").notNull(),
+  recordVersion: integer("record_version").notNull().default(1),
+  updatedAt: text("updated_at").notNull(),
+}, table => [
+  uniqueIndex("idx_parts_inventory_part_location").on(table.partCode, table.location),
+  index("idx_parts_inventory_part").on(table.partCode),
+]);
+
+export const diagnosticToolCalls = sqliteTable("diagnostic_tool_calls", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  caseId: text("case_id").notNull(),
+  toolName: text("tool_name").notNull(),
+  status: text("status", { enum: ["SUCCEEDED", "FAILED"] }).notNull(),
+  inputJson: text("input_json").notNull(),
+  outputJson: text("output_json").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [index("idx_diagnostic_tool_calls_run_created").on(table.runId, table.createdAt)]);
+
+export const diagnosticOutcomes = sqliteTable("diagnostic_outcomes", {
+  id: text("id").primaryKey(),
+  caseId: text("case_id").notNull(),
+  recommendationId: text("recommendation_id").notNull(),
+  resolutionCode: text("resolution_code").notNull(),
+  firstTimeFix: integer("first_time_fix").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  notes: text("notes").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [uniqueIndex("idx_diagnostic_outcomes_recommendation").on(table.recommendationId), index("idx_diagnostic_outcomes_case_created").on(table.caseId, table.createdAt)]);

@@ -22,6 +22,13 @@
       "when": 1789236136294,
       "tag": "0002_agentops_control_tower",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789238088770,
+      "tag": "0003_technician_diagnostic_copilot",
+      "breakpoints": true
     }
   ]
 }

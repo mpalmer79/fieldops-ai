@@ -3,14 +3,14 @@ import { env } from "cloudflare:workers";
 import type { ChatGPTUser } from "@/app/chatgpt-auth";
 import { optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
 
-export type OperatorRole = "dispatcher" | "supervisor" | "admin";
+export type OperatorRole = "technician" | "dispatcher" | "supervisor" | "admin";
 export type Operator = { id: string; email: string; display_name: string; role: OperatorRole };
 type PolicyRow = { id: string; sla_weight: number; travel_weight: number; load_weight: number; overtime_weight: number; stability_weight: number; version: number; updated_at: string };
 type PlanRow = { id: string; disruption_id: string; status: string; score: number; confidence: number; projected_sla: number; added_travel: number; overtime: number; policy_version: number; optimizer_version: string; version: number; created_at: string; updated_at: string };
 
 const POLICY_ID = "dispatch-default";
 const OPTIMIZER_VERSION = "constraint-search-v1";
-const roleRank: Record<OperatorRole, number> = { dispatcher: 1, supervisor: 2, admin: 3 };
+const roleRank: Record<OperatorRole, number> = { technician: 1, dispatcher: 2, supervisor: 3, admin: 4 };
 const technicianIdsByName: Record<string, string> = { "Darius Miles": "T-147", "Sofia Chen": "T-208", "Amara Patel": "T-319" };
 
 export function db(): D1Database {
