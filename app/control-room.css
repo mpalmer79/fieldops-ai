@@ -287,6 +287,18 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
 .weight-control > div span { color: var(--signal); font-size: .78rem; }
 .weight-control p { color: #7a878f; font-size: .72rem; }
 
+@media (max-width: 1450px) {
+  .capacity-secondary-grid { grid-template-columns: 1fr 1fr; }
+  .capacity-secondary-grid .model-card { grid-column: 1 / -1; }
+  .model-evidence { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+  .diagnostic-detail-grid { grid-template-columns: 1.2fr .8fr; }
+  .diagnostic-detail-grid .parts-card { grid-column: 1 / -1; }
+  .parts-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+  .diagnostic-lower-grid { grid-template-columns: 1fr 1fr; }
+  .diagnostic-lower-grid .audit-card { grid-column: 1 / -1; }
+  .diagnostic-audit-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; }
+}
+
 @media (max-width: 1280px) {
   .sidebar { width: 236px; }
   .workspace { margin-left: 236px; width: calc(100% - 236px); }
