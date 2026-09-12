@@ -20,7 +20,7 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Human approval boundary for customer rescheduling and other consequential actions
 - Explainable recovery plans with rejected candidates, assignment impact, and decision criteria
 - Authenticated operator roles for dispatcher, supervisor, and admin actions
-- Durable D1 state for technicians, work orders, policies, disruptions, plans, assignments, and audits
+- Durable PostgreSQL state for technicians, work orders, policies, disruptions, plans, assignments, and audits
 - Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
 - Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
 - Immutable decision stream backed by operational audit records

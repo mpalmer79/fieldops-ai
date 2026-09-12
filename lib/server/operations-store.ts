@@ -99,7 +99,7 @@ export async function getOperationSnapshot(operator: Operator) {
     policy: { ...policyWeights(policy), version: policy.version, updatedAt: policy.updated_at },
     activePlan,
     audit: auditResult.results,
-    backend: { persistence: "D1", optimizer: OPTIMIZER_VERSION, serverTime: now() },
+    backend: { persistence: "PostgreSQL", optimizer: OPTIMIZER_VERSION, serverTime: now() },
   };
 }
 

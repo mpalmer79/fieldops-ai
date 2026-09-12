@@ -279,7 +279,7 @@ async function persistBenchmark(operator: Operator, idempotencyKey: string, seed
   const runId = `BR-${crypto.randomUUID()}`;
   const timestamp = now();
   const environment = JSON.stringify({
-    runtime: "Cloudflare Workers",
+    runtime: "Next.js on Railway",
     dataset: "Deterministic synthetic portfolio workload",
     kernel: "Hard-constraint feasibility and weighted scoring",
     shardSize: SHARD_SIZE,
