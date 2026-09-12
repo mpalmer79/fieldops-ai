@@ -5,7 +5,7 @@ const TERRITORY = "ROOFTOP_01";
 const MODEL_VERSION = "weekday-recency-v1.0";
 const HORIZON_DAYS = 14;
 const TRAINING_WINDOW_DAYS = 56;
-const SEED_IDEMPOTENCY_KEY = "capacity-seed-v1";
+const SEED_IDEMPOTENCY_KEY = "capacity-automotive-seed-v2";
 
 type ObservationRow = {
   observed_date: string;
@@ -223,7 +223,7 @@ async function ensureDemandHistory() {
         INSERT OR IGNORE INTO demand_observations
         (id, observed_date, territory, skill, requested_jobs, completed_jobs, available_capacity, avg_duration_minutes, source, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'SYNTHETIC_PORTFOLIO_FIXTURE', ?)
-      `).bind(`DO-${date}-${profile.skill.toLowerCase()}`, date, TERRITORY, profile.skill, requested, completed, capacity, profile.duration, timestamp));
+      `).bind(`DO-${TERRITORY}-${date}-${profile.skill.toLowerCase()}`, date, TERRITORY, profile.skill, requested, completed, capacity, profile.duration, timestamp));
     });
   }
   for (let index = 0; index < statements.length; index += 50) await database.batch(statements.slice(index, index + 50));
