@@ -5,6 +5,7 @@ import { Activity, AlertTriangle, ArrowRight, BrainCircuit, Check, ChevronDown, 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { AgentOpsControlTower } from "@/components/agentops-control-tower";
 import { defaultPolicyWeights, optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
 
 type PlanStatus = "AWAITING_APPROVAL" | "APPROVED" | "EXECUTING" | "EXECUTED" | "REJECTED" | "EXECUTION_FAILED" | "ROLLING_BACK" | "ROLLED_BACK" | "ROLLBACK_FAILED";
@@ -21,7 +22,7 @@ const fallbackTechnicians: Technician[] = [
   { id: "T-274", initials: "JR", name: "Jonah Reed", specialty: "Cooking", stops: 5, miles: 31.4, utilization: 74, status: "On route", color: "#4ad1a8" },
   { id: "T-319", initials: "AP", name: "Amara Patel", specialty: "Multi-skill", stops: 7, miles: 39.1, utilization: 94, status: "At service", color: "#f5bd4f" },
 ];
-const navItems = [[Gauge, "Command"], [Map, "Live map"], [Route, "Routes"], [Users, "Technicians"], [Activity, "Performance"]] as const;
+const navItems = [[Gauge, "Command"], [Map, "Live map"], [Route, "Routes"], [Users, "Technicians"], [Activity, "Performance"], [BrainCircuit, "AgentOps"]] as const;
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) }, cache: "no-store" });
@@ -138,15 +139,16 @@ export default function Home() {
 
   const operatorName = snapshot?.operator.displayName ?? "Michael Palmer";
   const initials = operatorName.split(/\s|@/).filter(Boolean).map(value => value[0]).join("").slice(0, 2).toUpperCase() || "OP";
+  const agentOpsView = selected === "AgentOps";
   return <main className="app-shell"><aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
     <div className="brand"><span className="brand-mark"><Route size={18}/></span><span>FieldOps<span>AI</span></span></div><button className="mobile-close" aria-label="Close navigation" onClick={() => setMobileNav(false)}><X/></button>
     <nav aria-label="Main navigation"><p>Operations</p>{navItems.map(([Icon, label]) => <button key={label} onClick={() => { setSelected(label); setMobileNav(false); }} className={selected === label ? "active" : ""}><Icon/><span>{label}</span>{label === "Routes" && <small>25</small>}</button>)}</nav>
     <div className={`system-card ${backendOnline ? "online" : ""}`}><div><ShieldCheck/><span>Orchestrator</span></div><strong>{backendOnline ? "Persistent backend online" : "Connecting to backend"}</strong><p>{backendOnline ? `${snapshot?.backend.persistence} · ${snapshot?.backend.optimizer}` : "Loading operational state"}</p></div>
     <div className="profile"><span>{initials}</span><div><strong>{operatorName}</strong><small>{snapshot ? `${snapshot.operator.role} · authenticated` : "Authenticating"}</small></div><MoreHorizontal/></div>
-  </aside><section className="workspace"><header className="topbar"><button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu/></button><div><h1>Dispatch command</h1><p>Greater Boston service territory</p></div><div className="topbar-actions"><div className="operating"><CircleDot/> Live operation <ChevronDown/></div><span className="date">Friday, Sep 12</span><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy controls</Button><Button onClick={() => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Working..." : "Simulate disruption"}</Button></div></header>
-  <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
+  </aside><section className="workspace"><header className="topbar"><button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu/></button><div><h1>{agentOpsView ? "AI operations" : "Dispatch command"}</h1><p>{agentOpsView ? "Agent fleet governance and release safety" : "Greater Boston service territory"}</p></div><div className="topbar-actions"><div className="operating"><CircleDot/> {agentOpsView ? "Monitored fleet" : "Live operation"} <ChevronDown/></div><span className="date">Friday, Sep 12</span>{!agentOpsView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy controls</Button><Button onClick={() => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Working..." : "Simulate disruption"}</Button></>}</div></header>
+  {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
     <section className="metrics" aria-label="Today's performance"><Metric label="SLA achievement" value={incident ? "91.6%" : "94.1%"} detail="Target 92.0%" trend={incident ? "−2.5%" : "+1.8%"}/><Metric label="Active routes" value="25" detail="27 technicians available"/><Metric label="Travel distance" value={incident ? "386 mi" : "351 mi"} detail="Baseline 423 mi" trend={incident ? "+10.0%" : "−17.0%"}/><Metric label="At-risk stops" value={incident ? "7" : "2"} detail={incident ? "Action required" : "Within recovery range"}/></section>
-    <section className="operations-grid"><TerritoryMap/><DecisionPanel audit={snapshot?.audit ?? []} activePlan={activePlan} onReview={() => setReviewOpen(true)}/></section><TechnicianRoster technicians={visible} search={search} onSearch={setSearch}/></div>
+    <section className="operations-grid"><TerritoryMap/><DecisionPanel audit={snapshot?.audit ?? []} activePlan={activePlan} onReview={() => setReviewOpen(true)}/></section><TechnicianRoster technicians={visible} search={search} onSearch={setSearch}/></div>}
   <RecoveryDialog open={reviewOpen} onOpenChange={setReviewOpen} onAccept={() => void accept()} onReject={() => void reject()} plan={plan} weights={weights} busy={busy} persistedPlan={activePlan}/><PolicyDialog open={policyOpen} onOpenChange={setPolicyOpen} weights={weights} onChange={setWeights} onApply={() => void savePolicy(weights)} plan={previewPlan} busy={busy} policyVersion={policyVersion}/></section></main>;
 }
 

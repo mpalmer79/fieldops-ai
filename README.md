@@ -24,7 +24,12 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
 - Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
 - Immutable decision stream backed by operational audit records
-- Structured browser tools for agent-accessible simulation, policy updates, and plan execution
+- AgentOps control tower for fleet health, cost, latency, escalation, and incident monitoring
+- Versioned agent release pipeline with evaluation, shadow, production, and rollback stages
+- Five enforced release gates covering task success, policy compliance, hallucinations, tool accuracy, and latency
+- Immutable evaluation runs with deterministic 500-case suites and categorized failure evidence
+- Server-enforced promotion controls that block unsafe agent versions
+- Structured browser tools for dispatch simulation, policy updates, plan execution, agent evaluation, promotion, and rollback
 - Responsive desktop and mobile interface
 
 ## Demonstration workflow
@@ -37,6 +42,9 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 6. Inspect the persisted audit events in the decision stream.
 7. As an admin, use **Roll back execution** to restore the original work-order assignments through a compensating action.
 8. Open **Policy controls**, change an operational priority, and save a new version for the next recovery evaluation.
+9. Select **AgentOps** in the navigation to inspect the operational AI fleet.
+10. Compare the Dispatch Agent and Recovery Agent candidates, run their evaluation suites, and inspect the failed gates.
+11. Promote the passing Dispatch Agent candidate through shadow and production, then test the controlled production rollback.
 
 ## Optimization model
 
@@ -103,6 +111,9 @@ app/api/
   disruptions/             Idempotent operational event ingestion
   policy/                  Version-guarded policy updates
   recovery-plans/          Role-guarded plan transitions
+  agentops/                Fleet snapshot, evaluations, promotions, and rollback
+components/
+  agentops-control-tower.tsx  Agent fleet governance and release interface
 db/
   schema.ts                Indexed operational data model
 drizzle/                   Generated schema migration and metadata
@@ -123,7 +134,7 @@ The implementation demonstrates production-oriented controls, but it is not conn
 - [x] Constraint-based optimization
 - [x] Configurable business policies
 - [x] Persistent operational backend and event pipeline
-- [ ] AgentOps monitoring and evaluation control tower
+- [x] AgentOps monitoring and evaluation control tower
 - [ ] Technician diagnostic copilot
 - [ ] Demand forecasting and capacity planning
 - [ ] Enterprise-scale simulation and benchmark report

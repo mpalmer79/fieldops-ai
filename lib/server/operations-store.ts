@@ -4,7 +4,7 @@ import type { ChatGPTUser } from "@/app/chatgpt-auth";
 import { optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
 
 export type OperatorRole = "dispatcher" | "supervisor" | "admin";
-type Operator = { id: string; email: string; display_name: string; role: OperatorRole };
+export type Operator = { id: string; email: string; display_name: string; role: OperatorRole };
 type PolicyRow = { id: string; sla_weight: number; travel_weight: number; load_weight: number; overtime_weight: number; stability_weight: number; version: number; updated_at: string };
 type PlanRow = { id: string; disruption_id: string; status: string; score: number; confidence: number; projected_sla: number; added_travel: number; overtime: number; policy_version: number; optimizer_version: string; version: number; created_at: string; updated_at: string };
 
@@ -13,7 +13,7 @@ const OPTIMIZER_VERSION = "constraint-search-v1";
 const roleRank: Record<OperatorRole, number> = { dispatcher: 1, supervisor: 2, admin: 3 };
 const technicianIdsByName: Record<string, string> = { "Darius Miles": "T-147", "Sofia Chen": "T-208", "Amara Patel": "T-319" };
 
-function db(): D1Database {
+export function db(): D1Database {
   if (!env.DB) throw new Error("Operational database unavailable");
   return env.DB;
 }
@@ -71,7 +71,7 @@ async function seedDemoOperation(operator: Operator) {
   await database.batch(statements);
 }
 
-function requireRole(operator: Operator, minimum: OperatorRole) {
+export function requireRole(operator: Operator, minimum: OperatorRole) {
   if (roleRank[operator.role] < roleRank[minimum]) throw new OperationError(403, `${minimum} role required`, "FORBIDDEN");
 }
 
@@ -189,7 +189,7 @@ function planStatements(database: D1Database, planId: string, plan: RecoveryPlan
   ];
 }
 
-function auditStatement(database: D1Database, id: string, entityType: string, entityId: string, action: string, fromStatus: string | null, toStatus: string | null, operator: Operator, metadata: unknown, timestamp = now()) {
+export function auditStatement(database: D1Database, id: string, entityType: string, entityId: string, action: string, fromStatus: string | null, toStatus: string | null, operator: Operator, metadata: unknown, timestamp = now()) {
   return database.prepare("INSERT OR IGNORE INTO audit_log (id, entity_type, entity_id, action, from_status, to_status, actor_id, actor_role, metadata_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(id, entityType, entityId, action, fromStatus, toStatus, operator.id, operator.role, JSON.stringify(metadata), timestamp);
 }
 
