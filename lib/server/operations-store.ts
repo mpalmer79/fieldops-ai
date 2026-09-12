@@ -1,7 +1,9 @@
 import "server-only";
-import { env } from "cloudflare:workers";
 import type { ChatGPTUser } from "@/app/chatgpt-auth";
 import { optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
+import { db } from "@/lib/server/database";
+
+export { db } from "@/lib/server/database";
 
 export type OperatorRole = "technician" | "dispatcher" | "supervisor" | "admin";
 export type Operator = { id: string; email: string; display_name: string; role: OperatorRole };
@@ -12,11 +14,6 @@ const POLICY_ID = "dispatch-default";
 const OPTIMIZER_VERSION = "constraint-search-v1";
 const roleRank: Record<OperatorRole, number> = { technician: 1, dispatcher: 2, supervisor: 3, admin: 4 };
 const technicianIdsByName: Record<string, string> = { "Darius Miles": "T-147", "Sofia Chen": "T-208", "Amara Patel": "T-319" };
-
-export function db(): D1Database {
-  if (!env.DB) throw new Error("Operational database unavailable");
-  return env.DB;
-}
 
 function now() {
   return new Date().toISOString();

@@ -118,12 +118,12 @@ flowchart TD
 
 - Next.js 16 and React 19
 - TypeScript
-- Vinext and Cloudflare Workers
+- Standard Next.js Node.js runtime on the Railway deployment branch
 - Tailwind CSS
 - Radix UI and shadcn-compatible interface primitives
 - Lucide icons
 - WebMCP-compatible structured browser actions
-- Cloudflare D1 with generated, forward-only Drizzle migrations
+- Railway PostgreSQL with generated, forward-only Drizzle migrations
 
 ## Project structure
 
@@ -152,8 +152,10 @@ components/
 db/
   schema.ts                Indexed operational data model
 drizzle/                   Generated schema migration and metadata
+drizzle-postgres/          PostgreSQL migration set for Railway
 public/
   favicon.svg              FieldOps AI application icon
+railway.json               Railway build, migration, health, and runtime policy
 ```
 
 ## Engineering boundaries

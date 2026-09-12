@@ -1,4 +1,4 @@
-import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, pgTable as sqliteTable, real, text, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const operators = sqliteTable("operators", {
   id: text("id").primaryKey(),
