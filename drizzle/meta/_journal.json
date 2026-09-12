@@ -29,6 +29,13 @@
       "when": 1789238088770,
       "tag": "0003_technician_diagnostic_copilot",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789239271054,
+      "tag": "0004_demand_capacity_planning",
+      "breakpoints": true
     }
   ]
 }

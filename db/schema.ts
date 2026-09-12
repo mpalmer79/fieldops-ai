@@ -301,3 +301,97 @@ export const diagnosticOutcomes = sqliteTable("diagnostic_outcomes", {
   createdBy: text("created_by").notNull(),
   createdAt: text("created_at").notNull(),
 }, table => [uniqueIndex("idx_diagnostic_outcomes_recommendation").on(table.recommendationId), index("idx_diagnostic_outcomes_case_created").on(table.caseId, table.createdAt)]);
+
+export const demandObservations = sqliteTable("demand_observations", {
+  id: text("id").primaryKey(),
+  observedDate: text("observed_date").notNull(),
+  territory: text("territory").notNull(),
+  skill: text("skill").notNull(),
+  requestedJobs: integer("requested_jobs").notNull(),
+  completedJobs: integer("completed_jobs").notNull(),
+  availableCapacity: integer("available_capacity").notNull(),
+  avgDurationMinutes: integer("avg_duration_minutes").notNull(),
+  source: text("source").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [
+  uniqueIndex("idx_demand_observations_date_territory_skill").on(table.observedDate, table.territory, table.skill),
+  index("idx_demand_observations_territory_date").on(table.territory, table.observedDate),
+]);
+
+export const forecastRuns = sqliteTable("forecast_runs", {
+  id: text("id").primaryKey(),
+  status: text("status", { enum: ["COMPLETED", "FAILED"] }).notNull(),
+  modelVersion: text("model_version").notNull(),
+  territory: text("territory").notNull(),
+  horizonDays: integer("horizon_days").notNull(),
+  trainingWindowDays: integer("training_window_days").notNull(),
+  wape: real("wape").notNull(),
+  bias: real("bias").notNull(),
+  intervalCoverage: real("interval_coverage").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  inputSnapshotJson: text("input_snapshot_json").notNull(),
+  createdBy: text("created_by").notNull(),
+  startedAt: text("started_at").notNull(),
+  completedAt: text("completed_at").notNull(),
+}, table => [
+  uniqueIndex("idx_forecast_runs_idempotency_key").on(table.idempotencyKey),
+  index("idx_forecast_runs_territory_completed").on(table.territory, table.completedAt),
+]);
+
+export const forecastPoints = sqliteTable("forecast_points", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  forecastDate: text("forecast_date").notNull(),
+  territory: text("territory").notNull(),
+  skill: text("skill").notNull(),
+  expectedDemand: integer("expected_demand").notNull(),
+  lowerBound: integer("lower_bound").notNull(),
+  upperBound: integer("upper_bound").notNull(),
+  availableCapacity: integer("available_capacity").notNull(),
+  riskLevel: text("risk_level", { enum: ["LOW", "MEDIUM", "HIGH"] }).notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [
+  uniqueIndex("idx_forecast_points_run_date_skill").on(table.runId, table.forecastDate, table.skill),
+  index("idx_forecast_points_run_date").on(table.runId, table.forecastDate),
+]);
+
+export const capacityScenarios = sqliteTable("capacity_scenarios", {
+  id: text("id").primaryKey(),
+  forecastRunId: text("forecast_run_id").notNull(),
+  name: text("name").notNull(),
+  status: text("status", { enum: ["DRAFT", "APPROVED"] }).notNull(),
+  demandChangePct: integer("demand_change_pct").notNull(),
+  availabilityChangePct: integer("availability_change_pct").notNull(),
+  overtimeHours: integer("overtime_hours").notNull(),
+  crossTrainedTechs: integer("cross_trained_techs").notNull(),
+  projectedDemand: integer("projected_demand").notNull(),
+  projectedCapacity: integer("projected_capacity").notNull(),
+  residualGap: integer("residual_gap").notNull(),
+  jobsProtected: integer("jobs_protected").notNull(),
+  estimatedCost: integer("estimated_cost").notNull(),
+  recordVersion: integer("record_version").notNull().default(1),
+  createdBy: text("created_by").notNull(),
+  approvedBy: text("approved_by"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  approvedAt: text("approved_at"),
+}, table => [
+  index("idx_capacity_scenarios_run_created").on(table.forecastRunId, table.createdAt),
+  index("idx_capacity_scenarios_status_updated").on(table.status, table.updatedAt),
+]);
+
+export const capacityActions = sqliteTable("capacity_actions", {
+  id: text("id").primaryKey(),
+  scenarioId: text("scenario_id").notNull(),
+  forecastDate: text("forecast_date").notNull(),
+  skill: text("skill").notNull(),
+  actionType: text("action_type").notNull(),
+  description: text("description").notNull(),
+  capacityDelta: integer("capacity_delta").notNull(),
+  estimatedCost: integer("estimated_cost").notNull(),
+  priority: integer("priority").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [
+  uniqueIndex("idx_capacity_actions_scenario_priority").on(table.scenarioId, table.priority),
+  index("idx_capacity_actions_scenario_date").on(table.scenarioId, table.forecastDate),
+]);

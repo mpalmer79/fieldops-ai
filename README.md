@@ -31,7 +31,9 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Server-enforced promotion controls that block unsafe agent versions
 - Evidence-grounded technician diagnostics with ranked hypotheses, cited sources, safety acknowledgement, and parts availability
 - Versioned diagnostic runs, immutable tool execution, escalation, and first-time-fix outcome capture
-- Structured browser tools for dispatch, governance, diagnostic analysis, recommendation acceptance, and outcome recording
+- Versioned 14-day demand forecasts with backtest WAPE, bias, prediction-interval coverage, and skill-level capacity risk
+- Capacity scenarios for demand, technician availability, overtime, and cross-trained staffing with explicit supervisor approval
+- Structured browser tools for dispatch, governance, diagnostics, forecasting, scenario evaluation, and capacity-plan approval
 - Responsive desktop and mobile interface
 
 ## Demonstration workflow
@@ -49,6 +51,8 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 11. Promote the passing Dispatch Agent candidate through shadow and production, then test the controlled production rollback.
 12. Select **Diagnostic Copilot** to inspect the linked service case, evidence, and inventory results.
 13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
+14. Select **Capacity Planning** to inspect the 14-day demand forecast, uncertainty ceiling, and skill-level staffing risk.
+15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
 
 ## Optimization model
 
@@ -117,9 +121,11 @@ app/api/
   recovery-plans/          Role-guarded plan transitions
   agentops/                Fleet snapshot, evaluations, promotions, and rollback
   diagnostics/             Grounded analysis, technician decisions, escalation, and outcomes
+  capacity/                Forecast generation, scenario evaluation, and capacity-plan approval
 components/
   agentops-control-tower.tsx  Agent fleet governance and release interface
   technician-diagnostic-copilot.tsx  Evidence-grounded field diagnostic workflow
+  capacity-planning.tsx    Demand forecasting and capacity scenario workspace
 db/
   schema.ts                Indexed operational data model
 drizzle/                   Generated schema migration and metadata
@@ -142,7 +148,7 @@ The implementation demonstrates production-oriented controls, but it is not conn
 - [x] Persistent operational backend and event pipeline
 - [x] AgentOps monitoring and evaluation control tower
 - [x] Technician diagnostic copilot
-- [ ] Demand forecasting and capacity planning
+- [x] Demand forecasting and capacity planning
 - [ ] Enterprise-scale simulation and benchmark report
 
 ## Portfolio focus

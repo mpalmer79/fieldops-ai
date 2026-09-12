@@ -58,7 +58,7 @@ type Snapshot = {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...init, cache: "no-store", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
-  const body = await response.json().catch(() => ({}));
+  const body = await response.json().catch(() => ({})) as Record<string, unknown>;
   if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : `Request failed (${response.status})`);
   return body as T;
 }
