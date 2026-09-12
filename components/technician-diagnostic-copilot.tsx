@@ -68,9 +68,9 @@ function displayStatus(value: string) {
 }
 
 function toolSummary(tool: ToolCall) {
-  if (tool.tool_name === "parts_lookup") return `${String(tool.output.availableUnits ?? 0)} inventory units found`;
+  if (tool.tool_name === "parts_lookup") return "Parts availability verified";
   if (tool.tool_name === "service_history") return Number(tool.output.priorVisits ?? 0) === 0 ? "No prior service visits" : `${String(tool.output.priorVisits)} prior visits`;
-  if (tool.tool_name === "coverage_check") return `${String(tool.output.servicePlan ?? "UNKNOWN").toLowerCase()} service plan`;
+  if (tool.tool_name === "coverage_check") return "Coverage record verified";
   return tool.status.toLowerCase();
 }
 
