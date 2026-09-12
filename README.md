@@ -19,6 +19,11 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Dynamic policy controls that recalculate the recommended plan
 - Human approval boundary for customer rescheduling and other consequential actions
 - Explainable recovery plans with rejected candidates, assignment impact, and decision criteria
+- Authenticated operator roles for dispatcher, supervisor, and admin actions
+- Durable D1 state for technicians, work orders, policies, disruptions, plans, assignments, and audits
+- Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
+- Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
+- Immutable decision stream backed by operational audit records
 - Structured browser tools for agent-accessible simulation, policy updates, and plan execution
 - Responsive desktop and mobile interface
 
@@ -28,9 +33,10 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 2. Observe the resulting changes to SLA, mileage, and at-risk appointments.
 3. Open **Review recovery plan**.
 4. Inspect proposed assignments, customer impact, hard-constraint validation, and solver evidence.
-5. Open **Policy controls** and change an operational priority.
-6. Return to the recovery plan to see the recalculated recommendation.
-7. Select **Accept and execute** to complete the controlled recovery workflow.
+5. Select **Approve and execute** to apply the five reassignments and queue two reschedules.
+6. Inspect the persisted audit events in the decision stream.
+7. As an admin, use **Roll back execution** to restore the original work-order assignments through a compensating action.
+8. Open **Policy controls**, change an operational priority, and save a new version for the next recovery evaluation.
 
 ## Optimization model
 
@@ -80,6 +86,7 @@ flowchart TD
 - Radix UI and shadcn-compatible interface primitives
 - Lucide icons
 - WebMCP-compatible structured browser actions
+- Cloudflare D1 with generated, forward-only Drizzle migrations
 
 ## Project structure
 
@@ -90,24 +97,24 @@ app/
 components/ui/             Accessible interface primitives
 lib/
   dispatch-optimizer.ts    Constraints, search, scoring, and plan output
+  server/                  Authentication, persistence, lifecycle, and audit services
+app/api/
+  operations/              Durable command-center snapshot
+  disruptions/             Idempotent operational event ingestion
+  policy/                  Version-guarded policy updates
+  recovery-plans/          Role-guarded plan transitions
+db/
+  schema.ts                Indexed operational data model
+drizzle/                   Generated schema migration and metadata
 public/
   favicon.svg              FieldOps AI application icon
 ```
 
 ## Engineering boundaries
 
-The current version is a portfolio prototype using synthetic operational data. The optimization logic is real and deterministic, but it currently executes in the browser. It does not yet represent a production dispatch system.
+The current version is a portfolio prototype using synthetic operational data. The optimization logic is real and deterministic and now executes on the server for operational actions. The browser also computes a non-authoritative policy preview before saving.
 
-The next architecture phase moves operational state and optimization to a server-side service with:
-
-- persistent technicians, appointments, routes, skills, parts, and policies
-- disruption event ingestion
-- recovery-plan lifecycle management
-- idempotent execution
-- optimistic concurrency control
-- immutable decision audits
-- authorization boundaries
-- rollback and integration-failure handling
+The implementation demonstrates production-oriented controls, but it is not connected to a live field-service platform. External dispatch, customer-notification, inventory, and routing integrations remain simulated boundaries. Execution updates durable work-order state, while rollback is implemented as an explicit compensating transaction with its own audit event.
 
 ## Roadmap
 
@@ -115,7 +122,7 @@ The next architecture phase moves operational state and optimization to a server
 - [x] Disruption and recovery workflow
 - [x] Constraint-based optimization
 - [x] Configurable business policies
-- [ ] Persistent operational backend and event pipeline
+- [x] Persistent operational backend and event pipeline
 - [ ] AgentOps monitoring and evaluation control tower
 - [ ] Technician diagnostic copilot
 - [ ] Demand forecasting and capacity planning
