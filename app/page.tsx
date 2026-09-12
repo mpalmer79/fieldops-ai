@@ -46,6 +46,34 @@ function Metric({ code, label, value, detail, trend }: { code: string; label: st
   return <div className="metric-card"><div className="metric-head"><span className="metric-code">{code}</span><div className="metric-label">{label}</div></div><div className="metric-row"><strong>{value}</strong>{trend && <span className="trend">{trend}</span>}</div><span className="metric-detail">{detail}</span><span className="metric-scan" aria-hidden="true"/></div>;
 }
 
+function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { plan: RecoveryPlan; busy: boolean; backendOnline: boolean; onSimulate: () => void; onPolicy: () => void }) {
+  return <section className="product-story" aria-labelledby="project-story-title">
+    <div className="story-narrative">
+      <div className="story-kicker"><span>PORTFOLIO CASE STUDY / 01</span><span>PRODUCTION-GRADE PROTOTYPE</span></div>
+      <h2 id="project-story-title">A technician calls out. Seven customer promises are suddenly at risk.</h2>
+      <p className="story-lede">FieldOps AI is a decision system for field-service dispatch teams. It turns an unexpected capacity failure into a constraint-safe recovery plan, gives the dispatcher evidence to review, and records every consequential action.</p>
+      <div className="story-actions"><Button onClick={onSimulate} disabled={busy || !backendOnline}><Sparkles/> {busy ? "Evaluating disruption..." : "Run the live disruption"}</Button><Button variant="outline" onClick={onPolicy} disabled={busy || !backendOnline}><Settings2/> Inspect decision policy</Button></div>
+      <div className="story-pillars">
+        <article><span>THE OPERATING PROBLEM</span><strong>Manual recovery creates cascading failures</strong><p>Dispatchers must protect appointment windows while checking skills, territory, parts, route capacity, travel, and overtime.</p></article>
+        <article><span>THE DECISION SYSTEM</span><strong>Feasible plans before weighted tradeoffs</strong><p>Hard constraints eliminate unsafe assignments. The optimizer then ranks viable plans against explicit business priorities.</p></article>
+        <article><span>THE CONTROL BOUNDARY</span><strong>AI recommends. A human authorizes.</strong><p>Customer rescheduling and execution remain approval-gated, versioned, reversible, and auditable.</p></article>
+      </div>
+    </div>
+    <aside className="story-case" aria-label="Live operating scenario">
+      <div className="case-signal"><span>LIVE OPERATING SCENARIO</span><span className="case-live"><i/> READY</span></div>
+      <div className="case-incident"><span><AlertTriangle/> CAPACITY FAILURE</span><strong>Technician T-274 unavailable</strong><p>Seven scheduled appliance-service stops require immediate evaluation across the Greater Boston territory.</p></div>
+      <div className="decision-path" aria-label="Decision path">
+        <div><span>01</span><strong>Ingest</strong><small>Disruption persisted</small></div><ArrowRight/>
+        <div><span>02</span><strong>Constrain</strong><small>Ineligible moves removed</small></div><ArrowRight/>
+        <div><span>03</span><strong>Approve</strong><small>Dispatcher reviews evidence</small></div><ArrowRight/>
+        <div><span>04</span><strong>Execute</strong><small>Assignments audited</small></div>
+      </div>
+      <div className="story-outcomes"><div><small>Appointments preserved</small><strong>{plan.assignments.length} / 7</strong></div><div><small>Projected SLA</small><strong>{plan.projectedSla}%</strong></div><div><small>Human approvals</small><strong>Required</strong></div></div>
+      <div className="story-application"><ShieldCheck/><div><span>REAL-LIFE APPLICATION</span><p>Modeled for appliance repair, HVAC, utilities, telecom, and other mobile service fleets. The scenario data is synthetic; the decision workflow operates end to end.</p></div></div>
+    </aside>
+  </section>;
+}
+
 export default function Home() {
   const [selected, setSelected] = useState("Command");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -159,6 +187,7 @@ export default function Home() {
     <div className="profile"><span>{initials}</span><div><strong>{operatorName}</strong><small>{snapshot ? `${snapshot.operator.role} · authenticated` : "Authenticating"}</small></div><MoreHorizontal/></div>
   </aside><section className="workspace"><header className="topbar"><button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu/></button><div className="workspace-title"><span>LIVE WORKSPACE / {selected.toUpperCase()}</span><h1>{viewTitle}</h1><p>{viewDescription}</p></div><div className="topbar-actions"><div className="operating"><CircleDot/><span><small>Operating mode</small>{operatingMode}</span><ChevronDown/></div><span className="date"><small>Shift date</small>Saturday, Sep 12</span>{!specializedView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy</Button><Button onClick={() => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Working..." : "Run disruption"}</Button></>}</div></header>
   {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
+    <ProductStory plan={plan} busy={busy} backendOnline={backendOnline} onSimulate={() => void simulate()} onPolicy={() => setPolicyOpen(true)}/>
     <section className="metrics" aria-label="Today's performance"><Metric code="SLA" label="Achievement" value={incident ? "91.6%" : "94.1%"} detail="Target 92.0%" trend={incident ? "−2.5%" : "+1.8%"}/><Metric code="RTE" label="Active routes" value="25" detail="27 technicians available"/><Metric code="DST" label="Travel distance" value={incident ? "386 mi" : "351 mi"} detail="Baseline 423 mi" trend={incident ? "+10.0%" : "−17.0%"}/><Metric code="RSK" label="At-risk stops" value={incident ? "7" : "2"} detail={incident ? "Action required" : "Within recovery range"}/></section>
     <section className="operations-grid"><TerritoryMap/><DecisionPanel audit={snapshot?.audit ?? []} activePlan={activePlan} onReview={() => setReviewOpen(true)}/></section><TechnicianRoster technicians={visible} search={search} onSearch={setSearch}/></div>}
   <RecoveryDialog open={reviewOpen} onOpenChange={setReviewOpen} onAccept={() => void accept()} onReject={() => void reject()} plan={plan} weights={weights} busy={busy} persistedPlan={activePlan}/><PolicyDialog open={policyOpen} onOpenChange={setPolicyOpen} weights={weights} onChange={setWeights} onApply={() => void savePolicy(weights)} plan={previewPlan} busy={busy} policyVersion={policyVersion}/></section></main>;
