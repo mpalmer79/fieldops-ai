@@ -36,6 +36,13 @@
       "when": 1789239271054,
       "tag": "0004_demand_capacity_planning",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789240322347,
+      "tag": "0005_enterprise_benchmark",
+      "breakpoints": true
     }
   ]
 }

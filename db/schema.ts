@@ -395,3 +395,50 @@ export const capacityActions = sqliteTable("capacity_actions", {
   uniqueIndex("idx_capacity_actions_scenario_priority").on(table.scenarioId, table.priority),
   index("idx_capacity_actions_scenario_date").on(table.scenarioId, table.forecastDate),
 ]);
+
+export const benchmarkRuns = sqliteTable("benchmark_runs", {
+  id: text("id").primaryKey(),
+  status: text("status", { enum: ["PASSED", "FAILED"] }).notNull(),
+  suiteVersion: text("suite_version").notNull(),
+  engineVersion: text("engine_version").notNull(),
+  seed: integer("seed").notNull(),
+  iterations: integer("iterations").notNull(),
+  profileCount: integer("profile_count").notNull(),
+  totalEvaluations: integer("total_evaluations").notNull(),
+  durationMs: real("duration_ms").notNull(),
+  throughput: real("throughput").notNull(),
+  p95ShardMs: real("p95_shard_ms").notNull(),
+  deterministicPassed: integer("deterministic_passed").notNull(),
+  zeroViolationPassed: integer("zero_violation_passed").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  environmentJson: text("environment_json").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  completedAt: text("completed_at").notNull(),
+}, table => [
+  uniqueIndex("idx_benchmark_runs_idempotency_key").on(table.idempotencyKey),
+  index("idx_benchmark_runs_completed").on(table.completedAt),
+]);
+
+export const benchmarkResults = sqliteTable("benchmark_results", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull(),
+  profileKey: text("profile_key").notNull(),
+  label: text("label").notNull(),
+  workOrders: integer("work_orders").notNull(),
+  technicians: integer("technicians").notNull(),
+  territories: integer("territories").notNull(),
+  iterations: integer("iterations").notNull(),
+  evaluations: integer("evaluations").notNull(),
+  durationMs: real("duration_ms").notNull(),
+  throughput: real("throughput").notNull(),
+  p95ShardMs: real("p95_shard_ms").notNull(),
+  feasibleRate: real("feasible_rate").notNull(),
+  hardRejectRate: real("hard_reject_rate").notNull(),
+  constraintViolations: integer("constraint_violations").notNull(),
+  checksum: text("checksum").notNull(),
+  createdAt: text("created_at").notNull(),
+}, table => [
+  uniqueIndex("idx_benchmark_results_run_profile").on(table.runId, table.profileKey),
+  index("idx_benchmark_results_run").on(table.runId),
+]);

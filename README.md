@@ -33,7 +33,11 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Versioned diagnostic runs, immutable tool execution, escalation, and first-time-fix outcome capture
 - Versioned 14-day demand forecasts with backtest WAPE, bias, prediction-interval coverage, and skill-level capacity risk
 - Capacity scenarios for demand, technician availability, overtime, and cross-trained staffing with explicit supervisor approval
-- Structured browser tools for dispatch, governance, diagnostics, forecasting, scenario evaluation, and capacity-plan approval
+- Enterprise-scale benchmark suite across 1,000 to 100,000 synthetic work orders
+- Measured constraint-kernel throughput and p95 shard latency with deterministic replay verification
+- Five regression gates for profile completion, determinism, hard constraints, throughput, and tail latency
+- Durable benchmark history, baseline comparisons, audit evidence, and downloadable CSV reports
+- Structured browser tools for dispatch, governance, diagnostics, forecasting, capacity planning, and benchmark execution
 - Responsive desktop and mobile interface
 
 ## Demonstration workflow
@@ -53,6 +57,8 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
 14. Select **Capacity Planning** to inspect the 14-day demand forecast, uncertainty ceiling, and skill-level staffing risk.
 15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
+16. Select **Simulation Lab** to inspect the latest enterprise-scale benchmark and release regression gates.
+17. Run a new benchmark suite, compare it with the previous baseline, and export the persisted CSV evidence report.
 
 ## Optimization model
 
@@ -66,6 +72,21 @@ Under the default policy, it:
 - selects the highest-scoring feasible plan
 
 Hard constraints are never converted into weighted preferences. An assignment that violates certification, territory, parts availability, shift availability, or technician capacity is not eligible for scoring.
+
+## Enterprise benchmark model
+
+The benchmark runs the server-side hard-constraint and scoring kernel against four deterministic synthetic workload profiles. Every profile is replayed three times with the same seed so the suite can verify identical output checksums while measuring actual execution time.
+
+| Profile | Work orders | Technicians | Territories |
+|---|---:|---:|---:|
+| Small operation | 1,000 | 80 | 4 |
+| Regional network | 10,000 | 500 | 12 |
+| Enterprise network | 50,000 | 2,500 | 30 |
+| Peak enterprise load | 100,000 | 5,000 | 50 |
+
+The suite passes only when all profiles complete, all deterministic replays match, no invalid assignment crosses the hard-constraint guard, throughput remains above 25,000 evaluations per second, and p95 latency for a 1,000-record shard stays at or below 150 milliseconds.
+
+These measurements cover the bounded computation kernel only. They exclude live routing providers, network calls, database ingestion, browser rendering, and end-to-end production traffic, so they are regression evidence rather than a production capacity guarantee.
 
 The remaining feasible plans are scored using normalized policy weights:
 
@@ -122,10 +143,12 @@ app/api/
   agentops/                Fleet snapshot, evaluations, promotions, and rollback
   diagnostics/             Grounded analysis, technician decisions, escalation, and outcomes
   capacity/                Forecast generation, scenario evaluation, and capacity-plan approval
+  benchmarks/              Scale-suite execution and downloadable benchmark evidence
 components/
   agentops-control-tower.tsx  Agent fleet governance and release interface
   technician-diagnostic-copilot.tsx  Evidence-grounded field diagnostic workflow
   capacity-planning.tsx    Demand forecasting and capacity scenario workspace
+  simulation-benchmark.tsx Enterprise benchmark, regression gates, and report workspace
 db/
   schema.ts                Indexed operational data model
 drizzle/                   Generated schema migration and metadata
@@ -135,7 +158,7 @@ public/
 
 ## Engineering boundaries
 
-The current version is a portfolio prototype using synthetic operational data. The optimization logic is real and deterministic and now executes on the server for operational actions. The browser also computes a non-authoritative policy preview before saving.
+The current version is a portfolio prototype using synthetic operational data. The optimization and benchmark logic is real and deterministic and executes on the server. The browser also computes a non-authoritative policy preview before saving.
 
 The implementation demonstrates production-oriented controls, but it is not connected to a live field-service platform. External dispatch, customer-notification, inventory, and routing integrations remain simulated boundaries. Execution updates durable work-order state, while rollback is implemented as an explicit compensating transaction with its own audit event.
 
@@ -149,7 +172,7 @@ The implementation demonstrates production-oriented controls, but it is not conn
 - [x] AgentOps monitoring and evaluation control tower
 - [x] Technician diagnostic copilot
 - [x] Demand forecasting and capacity planning
-- [ ] Enterprise-scale simulation and benchmark report
+- [x] Enterprise-scale simulation and benchmark report
 
 ## Portfolio focus
 
