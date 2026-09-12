@@ -3,8 +3,8 @@ import "./globals.css";
 import "./control-room.css";
 
 export const metadata: Metadata = {
-  title: "FieldOps AI | Dispatch Command",
-  description: "AI-assisted field service dispatch, routing, and operational recovery.",
+  title: "FieldOps AI | Auditable Dispatch Recovery",
+  description: "A production-grade field service decision system for constraint-aware disruption recovery, human approval, and auditable execution.",
   other: {
     "codex-preview": "development",
   },
