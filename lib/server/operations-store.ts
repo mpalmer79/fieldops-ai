@@ -142,6 +142,7 @@ async function serializePlan(plan: PlanRow) {
 export async function createDisruption(operator: Operator, input: { technicianId: string; idempotencyKey: string }) {
   requireRole(operator, "dispatcher");
   if (!/^T-\d{3}$/.test(input.technicianId)) throw new OperationError(400, "Invalid technician ID", "INVALID_TECHNICIAN");
+  if (input.technicianId !== "T-274") throw new OperationError(422, "This bounded portfolio scenario supports technician T-274", "UNSUPPORTED_SCENARIO");
   if (input.idempotencyKey.length < 12 || input.idempotencyKey.length > 100) throw new OperationError(400, "Invalid idempotency key", "INVALID_IDEMPOTENCY_KEY");
   const database = db();
   const existing = await database.prepare("SELECT id FROM disruptions WHERE idempotency_key = ?").bind(input.idempotencyKey).first<{ id: string }>();
