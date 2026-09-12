@@ -1,25 +1,25 @@
 # FieldOps AI
 
-FieldOps AI is an agentic field-service orchestration platform for constraint-based dispatch, dynamic route recovery, human approval, policy optimization, and auditable operational decisions.
+FieldOps AI is an agentic automotive service-operations platform for constraint-based shop loading, same-day repair-order recovery, human approval, policy optimization, and auditable operational decisions.
 
-**Live application:** [fieldops-ai.mpalm2025.chatgpt.site](https://fieldops-ai.mpalm2025.chatgpt.site)
+**Live application:** [fieldops-ai.up.railway.app](https://fieldops-ai.up.railway.app/)
 
 ## The operational problem
 
-Field-service schedules deteriorate when technicians become unavailable, appointments run long, parts are missing, or urgent work arrives. Dispatchers must quickly determine which appointments can be preserved, which technicians are qualified, and which recovery plan creates the lowest operational cost without violating customer commitments.
+Dealership service plans deteriorate when technicians become unavailable, diagnostic work expands, parts are delayed, or urgent repair orders arrive. A shop foreman or service manager must quickly determine which promised completion times can be preserved, which technicians are qualified, and which recovery plan creates the lowest operational cost without violating customer commitments.
 
 FieldOps AI demonstrates how a bounded decision system can evaluate those tradeoffs while keeping consequential actions under human control.
 
 ## Current capabilities
 
-- Live dispatch command center with route, technician, SLA, mileage, and risk indicators
+- Live service command center with repair-order, technician, promise-time, shop-efficiency, and risk indicators
 - Deterministic recovery optimizer that evaluates technician reassignment combinations
-- Hard constraints for certification, territory, parts, shift availability, and route capacity
-- Weighted business objectives for SLA protection, travel, workload, overtime, and schedule stability
+- Hard constraints for OEM certification, bay and equipment access, parts, shift availability, and technician capacity
+- Weighted business objectives for promise-time protection, workflow movement, workload, overtime, and schedule stability
 - Dynamic policy controls that recalculate the recommended plan
 - Human approval boundary for customer rescheduling and other consequential actions
 - Explainable recovery plans with rejected candidates, assignment impact, and decision criteria
-- Authenticated operator roles for dispatcher, supervisor, and admin actions
+- Authenticated operator roles for technician, dispatcher, supervisor, and admin actions
 - Durable PostgreSQL state for technicians, work orders, policies, disruptions, plans, assignments, and audits
 - Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
 - Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
@@ -37,23 +37,23 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Measured constraint-kernel throughput and p95 shard latency with deterministic replay verification
 - Five regression gates for profile completion, determinism, hard constraints, throughput, and tail latency
 - Durable benchmark history, baseline comparisons, audit evidence, and downloadable CSV reports
-- Structured browser tools for dispatch, governance, diagnostics, forecasting, capacity planning, and benchmark execution
+- Structured browser tools for shop recovery, governance, vehicle diagnostics, forecasting, capacity planning, and benchmark execution
 - Responsive desktop and mobile interface
 
 ## Demonstration workflow
 
-1. Select **Simulate disruption** to make technician `T-274` unavailable.
-2. Observe the resulting changes to SLA, mileage, and at-risk appointments.
+1. Select **Run disruption** to make technician `T-274` unavailable.
+2. Observe the resulting changes to promise-time attainment, shop efficiency, and at-risk repair orders.
 3. Open **Review recovery plan**.
 4. Inspect proposed assignments, customer impact, hard-constraint validation, and solver evidence.
-5. Select **Approve and execute** to apply the five reassignments and queue two reschedules.
+5. Select **Approve and execute** to apply five repair-order reassignments and queue two advisor callbacks.
 6. Inspect the persisted audit events in the decision stream.
 7. As an admin, use **Roll back execution** to restore the original work-order assignments through a compensating action.
 8. Open **Policy controls**, change an operational priority, and save a new version for the next recovery evaluation.
 9. Select **AgentOps** in the navigation to inspect the operational AI fleet.
-10. Compare the Dispatch Agent and Recovery Agent candidates, run their evaluation suites, and inspect the failed gates.
-11. Promote the passing Dispatch Agent candidate through shadow and production, then test the controlled production rollback.
-12. Select **Diagnostic Copilot** to inspect the linked service case, evidence, and inventory results.
+10. Compare the Shop Load Agent and Promise Recovery Agent candidates, run their evaluation suites, and inspect the failed gates.
+11. Promote the passing Shop Load Agent candidate through shadow and production, then test the controlled production rollback.
+12. Select **Diagnostic Copilot** to inspect the linked vehicle case, evidence, and parts inventory.
 13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
 14. Select **Capacity Planning** to inspect the 14-day demand forecast, uncertainty ceiling, and skill-level staffing risk.
 15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
@@ -62,27 +62,27 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 
 ## Optimization model
 
-The current scenario contains seven affected service appointments and three eligible receiving technicians. The solver performs a bounded exhaustive search across the candidate assignment space.
+The current scenario contains seven affected repair orders and three eligible receiving technicians. The solver performs a bounded exhaustive search across the candidate assignment space.
 
 Under the default policy, it:
 
 - evaluates 896 capacity-valid assignment combinations
-- identifies 150 plans that preserve the required five appointments
+- identifies 150 plans that preserve the required five customer promises
 - excludes ineligible candidates before weighted scoring
 - selects the highest-scoring feasible plan
 
-Hard constraints are never converted into weighted preferences. An assignment that violates certification, territory, parts availability, shift availability, or technician capacity is not eligible for scoring.
+Hard constraints are never converted into weighted preferences. An assignment that violates OEM certification, bay or equipment access, parts availability, shift availability, or technician capacity is not eligible for scoring.
 
 ## Enterprise benchmark model
 
 The benchmark runs the server-side hard-constraint and scoring kernel against four deterministic synthetic workload profiles. Every profile is replayed three times with the same seed so the suite can verify identical output checksums while measuring actual execution time.
 
-| Profile | Work orders | Technicians | Territories |
+| Profile | Repair orders | Technicians | Rooftops |
 |---|---:|---:|---:|
-| Small operation | 1,000 | 80 | 4 |
-| Regional network | 10,000 | 500 | 12 |
-| Enterprise network | 50,000 | 2,500 | 30 |
-| Peak enterprise load | 100,000 | 5,000 | 50 |
+| Single rooftop | 1,000 | 80 | 4 |
+| Regional dealer group | 10,000 | 500 | 12 |
+| Enterprise dealer group | 50,000 | 2,500 | 30 |
+| Peak service load | 100,000 | 5,000 | 50 |
 
 The suite passes only when all profiles complete, all deterministic replays match, no invalid assignment crosses the hard-constraint guard, throughput remains above 25,000 evaluations per second, and p95 latency for a 1,000-record shard stays at or below 150 milliseconds.
 
@@ -92,8 +92,8 @@ The remaining feasible plans are scored using normalized policy weights:
 
 | Objective | Default weight |
 |---|---:|
-| SLA protection | 35% |
-| Travel efficiency | 25% |
+| Promise-time protection | 35% |
+| Workflow movement | 25% |
 | Technician load | 20% |
 | Overtime reduction | 15% |
 | Schedule stability | 5% |
@@ -102,12 +102,12 @@ The remaining feasible plans are scored using normalized policy weights:
 
 ```mermaid
 flowchart TD
-    A[Technician disruption] --> B[Generate candidate assignments]
+    A[Technician call-out] --> B[Generate RO assignments]
     B --> C[Remove hard-constraint violations]
     C --> D[Evaluate feasible plans]
     D --> E[Score business objectives]
     E --> F{Approval required?}
-    F -->|Yes| G[Dispatcher review]
+    F -->|Yes| G[Service manager review]
     F -->|No| H[Bounded automatic action]
     G --> I[Execute or reject]
     H --> I
@@ -129,7 +129,7 @@ flowchart TD
 
 ```text
 app/
-  page.tsx                 Dispatch interface and operator workflows
+  page.tsx                 Service command interface and operator workflows
   globals.css              Application theme and responsive layout
 components/ui/             Accessible interface primitives
 lib/
@@ -146,7 +146,7 @@ app/api/
   benchmarks/              Scale-suite execution and downloadable benchmark evidence
 components/
   agentops-control-tower.tsx  Agent fleet governance and release interface
-  technician-diagnostic-copilot.tsx  Evidence-grounded field diagnostic workflow
+  technician-diagnostic-copilot.tsx  Evidence-grounded vehicle diagnostic workflow
   capacity-planning.tsx    Demand forecasting and capacity scenario workspace
   simulation-benchmark.tsx Enterprise benchmark, regression gates, and report workspace
 db/
@@ -162,11 +162,11 @@ railway.json               Railway build, migration, health, and runtime policy
 
 The current version is a portfolio prototype using synthetic operational data. The optimization and benchmark logic is real and deterministic and executes on the server. The browser also computes a non-authoritative policy preview before saving.
 
-The implementation demonstrates production-oriented controls, but it is not connected to a live field-service platform. External dispatch, customer-notification, inventory, and routing integrations remain simulated boundaries. Execution updates durable work-order state, while rollback is implemented as an explicit compensating transaction with its own audit event.
+The implementation demonstrates production-oriented controls, but it is not connected to a live dealer management system. External DMS, technician timekeeping, parts-catalog, OEM-service-information, and customer-messaging integrations remain simulated boundaries. Execution updates durable repair-order state, while rollback is implemented as an explicit compensating transaction with its own audit event.
 
 ## Roadmap
 
-- [x] Dispatch command interface
+- [x] Automotive service command interface
 - [x] Disruption and recovery workflow
 - [x] Constraint-based optimization
 - [x] Configurable business policies

@@ -27,17 +27,17 @@ export async function ensureAgentOpsState(operator: Operator) {
   if (existing) return;
   const createdAt = timestamp();
   const agents = [
-    ["dispatch", "Dispatch Agent", "Technician assignment and capacity recovery", "HEALTHY", "dispatch-v2.4.0", "Tech Hub", "HIGH", 12840, 98.7, 2840, 3.1, 0.018],
-    ["recovery", "Recovery Agent", "Same-day disruption containment and exception handling", "DEGRADED", "recovery-v1.8.2", "Field Operations", "HIGH", 4180, 91.2, 6420, 12.3, 0.043],
-    ["parts", "Parts Agent", "Inventory validation and depot availability", "HEALTHY", "parts-v3.1.0", "Service Logistics", "MEDIUM", 9610, 99.1, 1180, 1.4, 0.006],
-    ["communications", "Customer Communication Agent", "Bounded appointment and delay notifications", "HEALTHY", "communications-v2.2.1", "Customer Operations", "MEDIUM", 7340, 97.9, 1980, 5.2, 0.012],
+    ["dispatch", "Shop Load Agent", "Repair-order assignment and technician capacity recovery", "HEALTHY", "dispatch-v2.4.0", "Service Technology", "HIGH", 12840, 98.7, 2840, 3.1, 0.018],
+    ["recovery", "Promise Recovery Agent", "Same-day promise protection and exception handling", "DEGRADED", "recovery-v1.8.2", "Fixed Operations", "HIGH", 4180, 91.2, 6420, 12.3, 0.043],
+    ["parts", "Parts Agent", "Inventory validation and parts-counter availability", "HEALTHY", "parts-v3.1.0", "Parts Operations", "MEDIUM", 9610, 99.1, 1180, 1.4, 0.006],
+    ["communications", "Advisor Communication Agent", "Bounded promise-time and delay notifications", "HEALTHY", "communications-v2.2.1", "Service Experience", "MEDIUM", 7340, 97.9, 1980, 5.2, 0.012],
   ];
   const versions = [
-    ["dispatch-v2.4.0", "dispatch", "2.4.0", "gpt-5.2", "sha256:8f2a17c", '["route_optimizer","technician_directory","policy_engine"]', '["read_routes","propose_assignments"]', "PRODUCTION"],
-    ["dispatch-v2.5.0", "dispatch", "2.5.0", "gpt-5.2", "sha256:47bd110", '["route_optimizer","technician_directory","policy_engine","event_stream"]', '["read_routes","propose_assignments"]', "EVALUATED"],
-    ["recovery-v1.8.2", "recovery", "1.8.2", "gpt-5.2", "sha256:315d6bb", '["impact_analyzer","route_optimizer","policy_engine"]', '["read_routes","propose_recovery"]', "PRODUCTION"],
-    ["recovery-v1.9.0", "recovery", "1.9.0", "gpt-5.2", "sha256:ea16490", '["impact_analyzer","route_optimizer","policy_engine","customer_window"]', '["read_routes","propose_recovery"]', "EVALUATED"],
-    ["parts-v3.1.0", "parts", "3.1.0", "gpt-5-mini", "sha256:a93f4d2", '["inventory_api","depot_directory"]', '["read_inventory"]', "PRODUCTION"],
+    ["dispatch-v2.4.0", "dispatch", "2.4.0", "gpt-5.2", "sha256:8f2a17c", '["shop_load_optimizer","technician_directory","policy_engine"]', '["read_repair_orders","propose_assignments"]', "PRODUCTION"],
+    ["dispatch-v2.5.0", "dispatch", "2.5.0", "gpt-5.2", "sha256:47bd110", '["shop_load_optimizer","technician_directory","policy_engine","event_stream"]', '["read_repair_orders","propose_assignments"]', "EVALUATED"],
+    ["recovery-v1.8.2", "recovery", "1.8.2", "gpt-5.2", "sha256:315d6bb", '["impact_analyzer","shop_load_optimizer","policy_engine"]', '["read_repair_orders","propose_recovery"]', "PRODUCTION"],
+    ["recovery-v1.9.0", "recovery", "1.9.0", "gpt-5.2", "sha256:ea16490", '["impact_analyzer","shop_load_optimizer","policy_engine","promise_time"]', '["read_repair_orders","propose_recovery"]', "EVALUATED"],
+    ["parts-v3.1.0", "parts", "3.1.0", "gpt-5-mini", "sha256:a93f4d2", '["inventory_api","parts_location_directory"]', '["read_inventory"]', "PRODUCTION"],
     ["communications-v2.2.1", "communications", "2.2.1", "gpt-5-mini", "sha256:10df7ce", '["template_library","notification_queue"]', '["draft_notification","queue_with_approval"]', "PRODUCTION"],
   ];
   const statements: D1PreparedStatement[] = [

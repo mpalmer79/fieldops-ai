@@ -78,10 +78,10 @@ type ProfileResult = {
 };
 
 const profiles = [
-  { key: "small", label: "Small operation", workOrders: 1_000, technicians: 80, territories: 4 },
-  { key: "regional", label: "Regional network", workOrders: 10_000, technicians: 500, territories: 12 },
-  { key: "enterprise", label: "Enterprise network", workOrders: 50_000, technicians: 2_500, territories: 30 },
-  { key: "peak", label: "Peak enterprise load", workOrders: 100_000, technicians: 5_000, territories: 50 },
+  { key: "small", label: "Single rooftop", workOrders: 1_000, technicians: 80, territories: 4 },
+  { key: "regional", label: "Regional dealer group", workOrders: 10_000, technicians: 500, territories: 12 },
+  { key: "enterprise", label: "Enterprise dealer group", workOrders: 50_000, technicians: 2_500, territories: 30 },
+  { key: "peak", label: "Peak service load", workOrders: 100_000, technicians: 5_000, territories: 50 },
 ] as const;
 
 function now() {

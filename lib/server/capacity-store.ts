@@ -1,7 +1,7 @@
 import "server-only";
 import { auditStatement, db, OperationError, requireRole, type Operator } from "@/lib/server/operations-store";
 
-const TERRITORY = "GREATER_BOSTON";
+const TERRITORY = "ROOFTOP_01";
 const MODEL_VERSION = "weekday-recency-v1.0";
 const HORIZON_DAYS = 14;
 const TRAINING_WINDOW_DAYS = 56;
@@ -98,9 +98,9 @@ type CapacityActionFixture = {
 };
 
 const skillProfiles = [
-  { skill: "Refrigeration", demand: 21, capacity: 19, duration: 72 },
-  { skill: "Laundry", demand: 18, capacity: 18, duration: 64 },
-  { skill: "Cooking", demand: 16, capacity: 17, duration: 68 },
+  { skill: "Drivability", demand: 21, capacity: 19, duration: 118 },
+  { skill: "Electrical & ADAS", demand: 18, capacity: 18, duration: 104 },
+  { skill: "Maintenance", demand: 16, capacity: 17, duration: 82 },
 ] as const;
 
 const demandDayFactor = [0.4, 1.13, 1.04, 1, 1.06, 1.11, 0.68];
@@ -241,10 +241,6 @@ async function demandHistory() {
 
 async function latestRun() {
   return db().prepare("SELECT * FROM forecast_runs WHERE territory = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(TERRITORY).first<ForecastRunRow>();
-}
-
-async function runById(runId: string) {
-  return db().prepare("SELECT * FROM forecast_runs WHERE id = ?").bind(runId).first<ForecastRunRow>();
 }
 
 async function pointsForRun(runId: string) {

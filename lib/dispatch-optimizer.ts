@@ -21,8 +21,8 @@ type Candidate = {
 type Job = {
   id: string;
   window: string;
-  appliance: string;
-  city: string;
+  serviceOperation: string;
+  vehicle: string;
   candidates: Candidate[];
 };
 
@@ -66,13 +66,13 @@ const candidate = (technicianId: string, technicianName: string, travelMiles: nu
 });
 
 const jobs: Job[] = [
-  { id: "WO-48321", window: "11:00–1:00", appliance: "Range", city: "Cambridge", candidates: [candidate("T-319", "Amara Patel", 6.4, 14, 0), candidate("T-147", "Darius Miles", 9.1, 24, 0)] },
-  { id: "WO-48344", window: "1:00–3:00", appliance: "Wall oven", city: "Somerville", candidates: [candidate("T-147", "Darius Miles", 5.2, 9, 0), candidate("T-319", "Amara Patel", 7.8, 18, 0)] },
-  { id: "WO-48367", window: "3:00–5:00", appliance: "Cooktop", city: "Boston", candidates: [candidate("T-208", "Sofia Chen", 8.1, 18, 0.2), candidate("T-319", "Amara Patel", 11.7, 27, 0.1), candidate("T-147", "Darius Miles", 10.4, 25, 0)] },
-  { id: "WO-48372", window: "3:00–5:00", appliance: "Range", city: "Brookline", candidates: [candidate("T-319", "Amara Patel", 13.2, 35, 0.2), candidate("T-147", "Darius Miles", 16.8, 42, 0.3)] },
-  { id: "WO-48389", window: "4:00–6:00", appliance: "Wall oven", city: "Quincy", candidates: [candidate("T-147", "Darius Miles", 14.3, 37, 0.4), candidate("T-319", "Amara Patel", 21.6, 48, 0.5)] },
-  { id: "WO-48401", window: "2:00–4:00", appliance: "Microwave", city: "Medford", candidates: [candidate("T-208", "Sofia Chen", 4.9, 11, 0), candidate("T-319", "Amara Patel", 8.7, 20, 0), candidate("T-147", "Darius Miles", 7.3, 17, 0, { partAvailable: false })] },
-  { id: "WO-48412", window: "4:00–6:00", appliance: "Range", city: "Newton", candidates: [candidate("T-147", "Darius Miles", 12.8, 31, 0.3), candidate("T-319", "Amara Patel", 10.6, 29, 0.2), candidate("T-208", "Sofia Chen", 9.2, 22, 0, { certified: false })] },
+  { id: "WO-48321", window: "11:00 AM", serviceOperation: "Check-engine diagnosis", vehicle: "2023 GV70", candidates: [candidate("T-319", "Amara Patel", 6.4, 14, 0), candidate("T-147", "Darius Miles", 9.1, 24, 0)] },
+  { id: "WO-48344", window: "1:00 PM", serviceOperation: "Brake vibration", vehicle: "2022 G80", candidates: [candidate("T-147", "Darius Miles", 5.2, 9, 0), candidate("T-319", "Amara Patel", 7.8, 18, 0)] },
+  { id: "WO-48367", window: "3:00 PM", serviceOperation: "60K maintenance", vehicle: "2021 GV80", candidates: [candidate("T-208", "Sofia Chen", 8.1, 18, 0.2), candidate("T-319", "Amara Patel", 11.7, 27, 0.1), candidate("T-147", "Darius Miles", 10.4, 25, 0)] },
+  { id: "WO-48372", window: "3:30 PM", serviceOperation: "Intermittent no-start", vehicle: "2023 G70", candidates: [candidate("T-319", "Amara Patel", 13.2, 35, 0.2), candidate("T-147", "Darius Miles", 16.8, 42, 0.3)] },
+  { id: "WO-48389", window: "4:00 PM", serviceOperation: "Recall campaign", vehicle: "2024 GV80", candidates: [candidate("T-147", "Darius Miles", 14.3, 37, 0.4), candidate("T-319", "Amara Patel", 21.6, 48, 0.5)] },
+  { id: "WO-48401", window: "2:00 PM", serviceOperation: "ADAS calibration", vehicle: "2023 GV60", candidates: [candidate("T-208", "Sofia Chen", 4.9, 11, 0), candidate("T-319", "Amara Patel", 8.7, 20, 0), candidate("T-147", "Darius Miles", 7.3, 17, 0, { partAvailable: false })] },
+  { id: "WO-48412", window: "4:30 PM", serviceOperation: "Cooling-system repair", vehicle: "2022 G90", candidates: [candidate("T-147", "Darius Miles", 12.8, 31, 0.3), candidate("T-319", "Amara Patel", 10.6, 29, 0.2), candidate("T-208", "Sofia Chen", 9.2, 22, 0, { certified: false })] },
 ];
 
 const isEligible = (candidate: Candidate) => candidate.certified && candidate.inTerritory && candidate.partAvailable && candidate.onShift;
@@ -126,13 +126,13 @@ export function optimizeRecovery(weights: PolicyWeights): RecoveryPlan {
   search(0);
   const selected = best.map((choice, index) => ({ choice, job: jobs[index] }));
   const assigned = selected.filter((item): item is { choice: Candidate; job: Job } => item.choice !== null);
-  const rescheduled = selected.filter(item => item.choice === null).map(item => ({ id: item.job.id, job: `${item.job.appliance} · ${item.job.city}`, window: item.job.window }));
+  const rescheduled = selected.filter(item => item.choice === null).map(item => ({ id: item.job.id, job: `${item.job.serviceOperation} · ${item.job.vehicle}`, window: item.job.window }));
   const addedTravel = assigned.reduce((sum, item) => sum + item.choice.travelMiles, 0);
   const overtime = assigned.reduce((sum, item) => sum + item.choice.overtimeHours, 0);
   const avgDelay = assigned.reduce((sum, item) => sum + item.choice.delayMinutes, 0) / Math.max(1, assigned.length);
 
   return {
-    assignments: assigned.map(item => ({ jobId: item.job.id, window: item.job.window, job: `${item.job.appliance} · ${item.job.city}`, from: "Jonah Reed", to: item.choice.technicianName, impactMinutes: item.choice.delayMinutes, travelMiles: item.choice.travelMiles, overtimeHours: item.choice.overtimeHours })),
+    assignments: assigned.map(item => ({ jobId: item.job.id, window: item.job.window, job: `${item.job.serviceOperation} · ${item.job.vehicle}`, from: "Jonah Reed", to: item.choice.technicianName, impactMinutes: item.choice.delayMinutes, travelMiles: item.choice.travelMiles, overtimeHours: item.choice.overtimeHours })),
     rescheduled,
     score: Math.round(bestScore * 10) / 10,
     confidence: Math.min(98, Math.round(78 + bestScore * 0.18)),

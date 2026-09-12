@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, BarChart3, CalendarRange, Check, CheckCircle2, Clock3, DollarSign, RefreshCw, ShieldCheck, Sparkles, TrendingUp, Users, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, Check, CheckCircle2, RefreshCw, ShieldCheck, Sparkles, TrendingUp, Users, XCircle } from "lucide-react";
 import { Area, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 
@@ -138,7 +138,7 @@ export function CapacityPlanning() {
 
   const scenario = snapshot.scenario;
   return <section className="capacity-planning">
-    <div className="capacity-intro"><div><span className="eyebrow"><TrendingUp/> Forecast and workforce planning</span><h2>Demand and capacity control center</h2><p>Expose future service risk before it becomes a same-day dispatch failure.</p></div><div className="forecast-context"><span>Current forecast</span><strong>{shortDate(snapshot.daily[0]?.date)} to {shortDate(snapshot.daily.at(-1)?.date)}</strong><small>{snapshot.run.modelVersion} · {snapshot.run.horizonDays}-day horizon</small></div></div>
+    <div className="capacity-intro"><div><span className="eyebrow"><TrendingUp/> Appointment and workforce planning</span><h2>Service demand and capacity control</h2><p>Expose future skill and flagged-hour risk before it becomes a same-day shop failure.</p></div><div className="forecast-context"><span>Current forecast</span><strong>{shortDate(snapshot.daily[0]?.date)} to {shortDate(snapshot.daily.at(-1)?.date)}</strong><small>{snapshot.run.modelVersion} · {snapshot.run.horizonDays}-day horizon</small></div></div>
     {error && <div className="capacity-alert error"><XCircle/><span>{error}</span><button onClick={() => void load()}>Refresh plan</button></div>}
     {notice && <div className="capacity-alert success"><CheckCircle2/><span>{notice}</span></div>}
     <div className="capacity-metrics">

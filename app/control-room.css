@@ -156,6 +156,25 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
 .map-summary svg { color: var(--signal); }
 .map-summary strong { color: #dce6e8; font-size: .74rem; }
 .map-summary span { color: #718089; font-size: .68rem; }
+.shop-surface { position: relative; min-height: 476px; padding: 60px 18px 76px; overflow: hidden; background: radial-gradient(circle at 50% 30%, rgba(86,229,194,.055), transparent 35%), #0a1115; }
+.shop-surface::before { content: ""; position: absolute; inset: 0; opacity: .25; pointer-events: none; background-image: linear-gradient(rgba(72,98,104,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(72,98,104,.2) 1px, transparent 1px); background-size: 32px 32px; }
+.shop-status { position: absolute; z-index: 2; top: 17px; left: 18px; right: 18px; display: flex; align-items: center; justify-content: space-between; color: #52626b; font: 650 .64rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.shop-status span { display: flex; align-items: center; gap: 7px; color: var(--signal); }
+.shop-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 9px var(--signal); }
+.shop-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.bay-card { min-height: 138px; padding: 12px; border: 1px solid #2b3b42; border-top: 3px solid #458c7b; background: linear-gradient(155deg, rgba(22,34,39,.96), rgba(11,18,22,.98)); }
+.bay-card.orange { border-top-color: #c85d43; }
+.bay-card.purple { border-top-color: #4d9abb; }
+.bay-card.yellow { border-top-color: #b3792e; }
+.bay-card.offline { border-color: #66382f; border-top-color: #ff7254; background: linear-gradient(155deg, rgba(45,25,22,.96), rgba(18,15,15,.98)); }
+.bay-card.open { border-style: dashed; border-top-color: var(--signal); background: rgba(13,27,27,.72); }
+.bay-head { display: flex; align-items: center; justify-content: space-between; color: #65747c; font: 700 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.bay-head strong { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #405057; color: #cbd6d9; font-size: .61rem; }
+.bay-card > small { display: block; margin-top: 12px; color: var(--signal); font: 700 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.bay-card.offline > small { color: #ff8e74; }
+.bay-card h3 { margin: 8px 0 3px; color: #e4ebed; font: 720 .84rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.bay-card p { margin: 0; color: #97a4aa; font-size: .72rem; }
+.bay-card b { display: block; margin-top: 8px; color: #69777f; font-size: .65rem; font-weight: 600; }
 
 .decision-panel { min-height: 551px; }
 .decision-panel .panel-heading button { color: #65737c; }
@@ -419,6 +438,9 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
   .metric-detail { font-size: .69rem; }
   .metric-scan { display: none; }
   .map-surface { height: 360px; }
+  .shop-surface { min-height: 620px; padding-inline: 12px; }
+  .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bay-card { min-height: 116px; }
   .map-coordinate { display: none; }
   .decision-list { display: block; }
   .panel-heading { padding-inline: 14px; }

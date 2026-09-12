@@ -46,19 +46,19 @@ async function seedDemoOperation(operator: Operator) {
   const database = db();
   const timestamp = now();
   const technicians = [
-    ["T-147", "Darius Miles", "Refrigeration", "AT_SERVICE", "GREATER_BOSTON", '["refrigeration","cooking"]', '["PART-RANGE-A","PART-OVEN-B"]', 8, 6, 42.8, 86],
-    ["T-208", "Sofia Chen", "Laundry", "ON_ROUTE", "GREATER_BOSTON", '["laundry","electrical","cooking"]', '["PART-MICRO-C"]', 8, 7, 36.2, 91],
-    ["T-274", "Jonah Reed", "Cooking", "ON_ROUTE", "GREATER_BOSTON", '["cooking"]', '["PART-RANGE-A","PART-OVEN-B"]', 7, 5, 31.4, 74],
-    ["T-319", "Amara Patel", "Multi-skill", "AT_SERVICE", "GREATER_BOSTON", '["cooking","laundry","refrigeration","electrical"]', '["PART-RANGE-A","PART-OVEN-B","PART-MICRO-C"]', 9, 7, 39.1, 94],
+    ["T-147", "Darius Miles", "Engine performance", "IN_BAY", "ROOFTOP_01", '["engine","drivability","electrical"]', '["CKP-39180-2M100","PAD-FRT-G80"]', 8, 6, 42.8, 86],
+    ["T-208", "Sofia Chen", "Electrical & ADAS", "ROAD_TEST", "ROOFTOP_01", '["electrical","adas","maintenance"]', '["CAM-ADAS-GV60"]', 8, 7, 36.2, 91],
+    ["T-274", "Jonah Reed", "Drivability", "IN_BAY", "ROOFTOP_01", '["drivability","engine","maintenance"]', '["CKP-39180-2M100","THERM-G90"]', 7, 5, 31.4, 74],
+    ["T-319", "Amara Patel", "Master technician", "IN_BAY", "ROOFTOP_01", '["engine","drivability","brakes","electrical","adas","maintenance"]', '["CKP-39180-2M100","PAD-FRT-G80","CAM-ADAS-GV60","THERM-G90"]', 9, 7, 39.1, 94],
   ];
   const orders = [
-    ["WO-48321", "Range", "Cambridge", "11:00–1:00", "cooking", "PART-RANGE-A"],
-    ["WO-48344", "Wall oven", "Somerville", "1:00–3:00", "cooking", "PART-OVEN-B"],
-    ["WO-48367", "Cooktop", "Boston", "3:00–5:00", "cooking", null],
-    ["WO-48372", "Range", "Brookline", "3:00–5:00", "cooking", "PART-RANGE-A"],
-    ["WO-48389", "Wall oven", "Quincy", "4:00–6:00", "cooking", "PART-OVEN-B"],
-    ["WO-48401", "Microwave", "Medford", "2:00–4:00", "electrical", "PART-MICRO-C"],
-    ["WO-48412", "Range", "Newton", "4:00–6:00", "cooking", "PART-RANGE-A"],
+    ["WO-48321", "Check-engine diagnosis", "2023 GV70", "11:00 AM", "drivability", "CKP-39180-2M100"],
+    ["WO-48344", "Brake vibration", "2022 G80", "1:00 PM", "brakes", "PAD-FRT-G80"],
+    ["WO-48367", "60K maintenance", "2021 GV80", "3:00 PM", "maintenance", null],
+    ["WO-48372", "Intermittent no-start", "2023 G70", "3:30 PM", "drivability", "CKP-39180-2M100"],
+    ["WO-48389", "Recall campaign", "2024 GV80", "4:00 PM", "engine", null],
+    ["WO-48401", "ADAS calibration", "2023 GV60", "2:00 PM", "adas", "CAM-ADAS-GV60"],
+    ["WO-48412", "Cooling-system repair", "2022 G90", "4:30 PM", "engine", "THERM-G90"],
   ];
   const statements: D1PreparedStatement[] = [
     database.prepare(`INSERT OR IGNORE INTO optimization_policies (id, sla_weight, travel_weight, load_weight, overtime_weight, stability_weight, version, updated_by, updated_at) VALUES (?, 35, 25, 20, 15, 5, 1, ?, ?)`).bind(POLICY_ID, operator.id, timestamp),
