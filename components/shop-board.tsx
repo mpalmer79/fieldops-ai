@@ -28,7 +28,7 @@ export function ShopBoard() {
       <div className="floor-plan" aria-label="Interactive service bay floor plan">
         <div className="floor-plan-heading"><div><span>SHOP FLOOR / NORTH WALL</span><strong>Bay occupancy and flow</strong></div><div className="floor-legend"><span><i className="active"/> Active</span><span><i className="risk"/> At risk</span><span><i className="open"/> Open</span></div></div>
         <div className="bay-plan-grid">
-          {serviceBays.map(bay => <button key={bay.id} className={`floor-bay ${bay.status} ${selectedBay.id === bay.id ? "selected" : ""}`} onClick={() => setSelectedBayId(bay.id)} aria-label={`Bay ${bay.id}, ${bay.repairOrder}, ${bay.statusLabel}`} aria-pressed={selectedBay.id === bay.id}>
+          {serviceBays.map(bay => <button key={bay.id} className={`floor-bay ro-form-card ${bay.status} ${selectedBay.id === bay.id ? "selected" : ""}`} onClick={() => setSelectedBayId(bay.id)} aria-label={`Bay ${bay.id}, ${bay.repairOrder}, ${bay.statusLabel}`} aria-pressed={selectedBay.id === bay.id}>
             <span className="floor-bay-head"><small>BAY {bay.id}</small><b>{bay.initials}</b></span>
             <CarFront aria-hidden="true"/>
             <span className="floor-bay-state">{bay.statusLabel}</span>
