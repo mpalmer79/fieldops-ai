@@ -53,7 +53,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
   color: var(--text-2);
 }
 .sidebar::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: linear-gradient(90deg, var(--signal) 0 31%, transparent 31% 100%); }
-.brand { min-height: 44px; padding: 0 2px; margin-bottom: 24px; gap: 11px; color: var(--text-1); letter-spacing: .02em; }
+.brand { min-height: 44px; padding: 0 2px; margin-bottom: 24px; gap: 11px; color: var(--text-1); letter-spacing: .02em; text-decoration: none; }
 .brand-mark { width: 38px; height: 38px; border-radius: 2px; color: var(--signal); background: #101a1c; border: 1px solid #2b554c; box-shadow: inset 0 0 0 3px #09110f; }
 .brand-mark svg { width: 19px; stroke-width: 1.8; }
 .brand-name { display: flex; flex-wrap: wrap; align-items: baseline; max-width: 130px; font-size: 1rem; font-weight: 800; letter-spacing: .08em; line-height: 1; }
