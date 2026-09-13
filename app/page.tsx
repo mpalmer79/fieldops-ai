@@ -62,6 +62,9 @@ function Metric({ code, label, value, detail, trend }: { code: string; label: st
 }
 
 function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { plan: RecoveryPlan; busy: boolean; backendOnline: boolean; onSimulate: () => void; onPolicy: () => void }) {
+  const tracedAssignment = plan.assignments.find(assignment => repairOrderId(assignment.jobId) === "RO-48372") ?? plan.assignments[0];
+  const [serviceOperation, vehicle] = tracedAssignment?.job.split(" · ") ?? ["Intermittent no-start", "2023 G70"];
+
   return <section className="product-story" aria-labelledby="project-story-title">
     <div className="story-narrative">
       <div className="story-kicker"><span>PORTFOLIO CASE STUDY / 01</span><span>PRODUCTION-GRADE PROTOTYPE</span></div>
@@ -84,6 +87,23 @@ function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { pla
         <div><span>04</span><strong>Execute</strong><small>RO changes audited</small></div>
       </div>
       <div className="story-outcomes"><div><small>Promises preserved</small><strong>{plan.assignments.length} / 7</strong></div><div><small>On-time projection</small><strong>{plan.projectedSla}%</strong></div><div><small>Manager approval</small><strong>Required</strong></div></div>
+      <div className="recovery-trace" aria-label="Representative repair-order recovery">
+        <div className="trace-heading"><span>REPAIR-ORDER RECOVERY / LIVE</span><small>CUSTOMER PROMISE</small></div>
+        <div className="trace-journey">
+          <div className="trace-order">
+            <span>AT RISK</span>
+            <strong>{tracedAssignment ? repairOrderId(tracedAssignment.jobId) : "RO-48372"}</strong>
+            <small>{vehicle}</small>
+          </div>
+          <div className="trace-route" aria-hidden="true"><i/><b/><i/><b/><i/></div>
+          <div className="trace-resolution">
+            <span>RECOVERY PLAN</span>
+            <strong>{tracedAssignment?.to ?? "Amara Patel"}</strong>
+            <small>{tracedAssignment?.window ?? "3:30 PM"} promise</small>
+          </div>
+        </div>
+        <div className="trace-context"><strong>{serviceOperation}</strong><span>Skill verified</span><span>Capacity checked</span><span>Approval gated</span></div>
+      </div>
       <div className="story-application"><ShieldCheck/><div><span>REAL-LIFE APPLICATION</span><p>Built for dealership service managers, shop foremen, advisors, and technicians managing same-day repair-order flow. Scenario data is synthetic; the workflow operates end to end.</p></div></div>
     </aside>
   </section>;
