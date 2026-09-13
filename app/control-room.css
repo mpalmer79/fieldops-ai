@@ -604,7 +604,7 @@ button.certification-row.selected { background: rgba(86,229,194,.075); box-shado
 .ro-form-card { isolation: isolate; }
 .ro-form-card::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; opacity: .17; background-image: repeating-linear-gradient(0deg, transparent 0 27px, rgba(130,160,166,.28) 27px 28px), repeating-linear-gradient(90deg, transparent 0 33%, rgba(130,160,166,.2) 33% calc(33% + 1px)); mask-image: linear-gradient(180deg, transparent 8%, #000 24%, #000 86%, transparent); }
 .ro-form-card > * { position: relative; z-index: 1; }
-.bay-card { position: relative; min-height: 158px; overflow: hidden; padding: 12px; border: 1px solid #2b3b42; border-top: 3px solid #458c7b; background: linear-gradient(155deg, rgba(22,34,39,.96), rgba(11,18,22,.98)); }
+.bay-card { position: relative; min-height: 184px; overflow: hidden; padding: 12px; border: 1px solid #2b3b42; border-top: 3px solid #458c7b; background: linear-gradient(155deg, rgba(22,34,39,.96), rgba(11,18,22,.98)); }
 .bay-card.orange { border-top-color: #c85d43; }
 .bay-card.purple { border-top-color: #4d9abb; }
 .bay-card.yellow { border-top-color: #b3792e; }
@@ -612,8 +612,10 @@ button.certification-row.selected { background: rgba(86,229,194,.075); box-shado
 .bay-card.open { border-style: dashed; border-top-color: var(--signal); background: rgba(13,27,27,.72); }
 .bay-head { display: flex; align-items: center; justify-content: space-between; color: #65747c; font: 700 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
 .bay-head strong { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #405057; color: #cbd6d9; font-size: .61rem; }
-.bay-form-fields { display: grid; grid-template-columns: 1.15fr .72fr 1fr; margin-top: 10px; border: 1px solid #35464d; background: rgba(8,14,17,.58); }
+.bay-form-fields { display: grid; grid-template-columns: .72fr 1fr; margin-top: 10px; border: 1px solid #35464d; background: rgba(8,14,17,.58); }
 .bay-form-fields > span { min-width: 0; padding: 6px 7px; border-right: 1px solid #35464d; }
+.bay-form-fields > span:first-child { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid #35464d; }
+.bay-form-fields > span:nth-child(2) { border-right: 1px solid #35464d; }
 .bay-form-fields > span:last-child { border-right: 0; }
 .bay-form-fields small, .bay-form-fields b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bay-form-fields small, .bay-form-line small { color: #607078; font: 700 .48rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
@@ -1008,7 +1010,7 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
   .map-surface { height: 360px; }
   .shop-surface { min-height: 620px; padding-inline: 12px; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bay-card { min-height: 150px; }
+  .bay-card { min-height: 184px; }
   .map-coordinate { display: none; }
   .decision-list { display: block; }
   .panel-heading { padding-inline: 14px; }
