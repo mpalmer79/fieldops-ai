@@ -10,7 +10,9 @@ import { Slider } from "@/components/ui/slider";
 import { AgentOpsControlTower } from "@/components/agentops-control-tower";
 import { TechnicianDiagnosticCopilot } from "@/components/technician-diagnostic-copilot";
 import { ShopBoard } from "@/components/shop-board";
+import { RepairOrdersBoard } from "@/components/repair-orders-board";
 import { defaultPolicyWeights, optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
+import { serviceBays } from "@/lib/service-operations-data";
 
 type PlanStatus = "AWAITING_APPROVAL" | "APPROVED" | "EXECUTING" | "EXECUTED" | "REJECTED" | "EXECUTION_FAILED" | "ROLLING_BACK" | "ROLLED_BACK" | "ROLLBACK_FAILED";
 type PersistedPlan = RecoveryPlan & { id: string; disruptionId: string; status: PlanStatus; version: number; policyVersion: number; optimizerVersion: string; createdAt: string; updatedAt: string };
@@ -29,17 +31,6 @@ const fallbackTechnicians: Technician[] = [
 const CapacityPlanning = dynamic(() => import("@/components/capacity-planning").then(module => module.CapacityPlanning), { ssr: false, loading: () => <div className="capacity-loading"><strong>Loading capacity planning</strong><span>Preparing forecast and scenario controls.</span></div> });
 const SimulationBenchmark = dynamic(() => import("@/components/simulation-benchmark").then(module => module.SimulationBenchmark), { ssr: false, loading: () => <div className="benchmark-loading"><strong>Loading benchmark evidence</strong><span>Preparing scale profiles and regression gates.</span></div> });
 const navItems = [[Gauge, "Service command"], [Map, "Shop board"], [Route, "Repair orders"], [Users, "Technicians"], [Activity, "Performance"], [CalendarRange, "Capacity Planning"], [FlaskConical, "Simulation Lab"], [Stethoscope, "Diagnostic Copilot"], [BrainCircuit, "AgentOps"]] as const;
-const shopBays = [
-  { bay: "01", tech: "DM", ro: "RO-48321", vehicle: "2023 GV70", operation: "Diagnosis", tone: "orange", state: "IN PROGRESS" },
-  { bay: "02", tech: "AP", ro: "RO-48344", vehicle: "2022 G80", operation: "Brake vibration", tone: "yellow", state: "QC 12:40" },
-  { bay: "03", tech: "SC", ro: "RO-48401", vehicle: "2023 GV60", operation: "ADAS calibration", tone: "purple", state: "EQUIPMENT" },
-  { bay: "04", tech: "JR", ro: "RO-48372", vehicle: "2023 G70", operation: "No-start", tone: "offline", state: "AT RISK" },
-  { bay: "05", tech: "AP", ro: "RO-48367", vehicle: "2021 GV80", operation: "60K service", tone: "yellow", state: "PARTS STAGED" },
-  { bay: "06", tech: "DM", ro: "RO-48412", vehicle: "2022 G90", operation: "Cooling system", tone: "orange", state: "IN PROGRESS" },
-  { bay: "07", tech: "SC", ro: "RO-48389", vehicle: "2024 GV80", operation: "Recall", tone: "purple", state: "READY" },
-  { bay: "08", tech: "—", ro: "OPEN", vehicle: "Alignment rack", operation: "Available capacity", tone: "open", state: "AVAILABLE" },
-] as const;
-
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) }, cache: "no-store" });
   const body = await response.json().catch(() => ({})) as Record<string, unknown>;
@@ -256,10 +247,11 @@ export default function Home() {
   const capacityView = selected === "Capacity Planning";
   const benchmarkView = selected === "Simulation Lab";
   const shopBoardView = selected === "Shop board";
-  const specializedView = agentOpsView || diagnosticView || capacityView || benchmarkView || shopBoardView;
-  const viewTitle = agentOpsView ? "AI operations" : diagnosticView ? "Vehicle diagnostics" : capacityView ? "Capacity planning" : benchmarkView ? "Simulation lab" : shopBoardView ? "Shop board" : "Service command";
-  const viewDescription = agentOpsView ? "Agent fleet governance and release safety" : diagnosticView ? "Evidence, safety, parts, and repair outcomes" : capacityView ? "Appointment forecasts, staffing risk, and scenario decisions" : benchmarkView ? "Dealer-group scale, regression gates, and benchmark evidence" : shopBoardView ? "Live bay occupancy, work state, and customer promise risk" : "Rooftop 01 · live service operation";
-  const operatingMode = agentOpsView ? "Monitored fleet" : diagnosticView ? "Grounded support" : capacityView ? "Planning horizon" : benchmarkView ? "Measured runtime" : shopBoardView ? "Floor control" : "Live operation";
+  const repairOrdersView = selected === "Repair orders";
+  const specializedView = agentOpsView || diagnosticView || capacityView || benchmarkView || shopBoardView || repairOrdersView;
+  const viewTitle = agentOpsView ? "AI operations" : diagnosticView ? "Vehicle diagnostics" : capacityView ? "Capacity planning" : benchmarkView ? "Simulation lab" : shopBoardView ? "Shop board" : repairOrdersView ? "Repair orders" : "Service command";
+  const viewDescription = agentOpsView ? "Agent fleet governance and release safety" : diagnosticView ? "Evidence, safety, parts, and repair outcomes" : capacityView ? "Appointment forecasts, staffing risk, and scenario decisions" : benchmarkView ? "Dealer-group scale, regression gates, and benchmark evidence" : shopBoardView ? "Live bay occupancy, work state, and customer promise risk" : repairOrdersView ? "Customer promise risk, repair progression, and recovery status" : "Rooftop 01 · live service operation";
+  const operatingMode = agentOpsView ? "Monitored fleet" : diagnosticView ? "Grounded support" : capacityView ? "Planning horizon" : benchmarkView ? "Measured runtime" : shopBoardView ? "Floor control" : repairOrdersView ? "Promise control" : "Live operation";
   return <main className="app-shell"><aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
     <div className="brand"><span className="brand-mark"><Route size={18}/></span><span className="brand-name">FIELD<span>/OPS</span><small>Autonomy console</small></span><span className="brand-index">AI</span></div><button className="mobile-close" aria-label="Close navigation" onClick={() => setMobileNav(false)}><X/></button>
     <div className="territory-code"><span>SERVICE CONTROL</span><strong>ROOFTOP 01 · BOSTON</strong><small>12 BAYS / 27 TECHNICIANS</small></div>
@@ -267,7 +259,7 @@ export default function Home() {
     <div className={`system-card ${backendOnline ? "online" : ""}`}><div><ShieldCheck/><span>System integrity</span></div><strong>{backendOnline ? "Orchestrator online" : "Establishing link"}</strong><p>{backendOnline ? `${snapshot?.backend.persistence} / ${snapshot?.backend.optimizer}` : "Loading operational state"}</p></div>
     <div className="profile"><span>{initials}</span><div><strong>{operatorName}</strong><small>{snapshot ? `${snapshot.operator.role} · authenticated` : "Authenticating"}</small></div><MoreHorizontal/></div>
   </aside><section className="workspace"><header className="topbar"><button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu/></button><div className="workspace-title"><span>LIVE WORKSPACE / {selected.toUpperCase()}</span><h1>{viewTitle}</h1><p>{viewDescription}</p></div><div className="topbar-actions"><div className="operating"><CircleDot/><span><small>Operating mode</small>{operatingMode}</span><ChevronDown/></div><span className="date"><small>Shift date</small>Saturday, Sep 12</span>{!specializedView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy</Button><Button onClick={() => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Working..." : "Run disruption"}</Button></>}</div></header>
-  {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : shopBoardView ? <div className="content shop-board-content"><ShopBoard/></div> : <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
+  {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : shopBoardView ? <div className="content shop-board-content"><ShopBoard/></div> : repairOrdersView ? <div className="content repair-orders-content"><RepairOrdersBoard/></div> : <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
     <ProductStory plan={plan} busy={busy} backendOnline={backendOnline} onSimulate={() => void simulate()} onPolicy={() => setPolicyOpen(true)}/>
     <section className="metrics" aria-label="Today's performance"><Metric code="OTP" label="Promise-time attainment" value={incident ? "91.6%" : "94.1%"} detail="Target 92.0%" trend={incident ? "−2.5%" : "+1.8%"}/><Metric code="WIP" label="Open repair orders" value="25" detail="164.5 sold hours"/><Metric code="EFF" label="Shop efficiency" value={incident ? "106%" : "112%"} detail="Target 105%" trend={incident ? "−6 pts" : "+7 pts"}/><Metric code="RSK" label="At-risk promises" value={incident ? "7" : "2"} detail={incident ? "Manager action required" : "Within recovery range"}/></section>
     <RecoveryWalkthrough plan={plan} status={activePlan?.status}/>
@@ -276,7 +268,7 @@ export default function Home() {
 }
 
 function ShopFloor() {
-  return <article className="panel map-panel"><div className="panel-heading"><div><span className="panel-code">01 / SHOP FLOOR</span><h2>Live service operation</h2><p>25 active repair orders · 12 service bays</p></div><div className="map-key"><span><i/> In progress</span><span><i className="service-dot"/> At risk</span></div></div><div className="shop-surface"><div className="shop-status"><span><i/> SHOP SIGNAL LIVE</span><strong>WIP CONTROL · ROOFTOP 01</strong></div><div className="shop-grid">{shopBays.map(item => <div className={`bay-card ${item.tone}`} key={item.bay}><div className="bay-head"><span>BAY {item.bay}</span><strong>{item.tech}</strong></div><small>{item.state}</small><h3>{item.ro}</h3><p>{item.vehicle}</p><b>{item.operation}</b></div>)}</div><div className="map-summary"><Navigation/><div><strong>Next shop-load evaluation</strong><span>in 4 min 32 sec</span></div></div></div></article>;
+  return <article className="panel map-panel"><div className="panel-heading"><div><span className="panel-code">01 / SHOP FLOOR</span><h2>Live service operation</h2><p>25 active repair orders · 12 service bays</p></div><div className="map-key"><span><i/> In progress</span><span><i className="service-dot"/> At risk</span></div></div><div className="shop-surface"><div className="shop-status"><span><i/> SHOP SIGNAL LIVE</span><strong>WIP CONTROL · ROOFTOP 01</strong></div><div className="shop-grid">{serviceBays.slice(0, 8).map(item => <div className={`bay-card ${item.tone}`} key={item.id}><div className="bay-head"><span>BAY {item.id}</span><strong>{item.initials}</strong></div><small>{item.statusLabel.toUpperCase()}</small><h3>{item.repairOrder}</h3><p>{item.vehicle}</p><b>{item.operation}</b></div>)}</div><div className="map-summary"><Navigation/><div><strong>Next shop-load evaluation</strong><span>in 4 min 32 sec</span></div></div></div></article>;
 }
 
 function auditCopy(row: AuditRow) {
