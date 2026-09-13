@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { Activity, AlertTriangle, ArrowRight, BrainCircuit, CalendarRange, Check, ChevronDown, CircleDot, FlaskConical, Gauge, Map, Menu, MoreHorizontal, Navigation, Route, Search, Settings2, ShieldCheck, Sparkles, Stethoscope, Undo2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -69,17 +70,16 @@ function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { pla
     <div className="story-narrative">
       <div className="story-kicker"><span>PORTFOLIO CASE STUDY / 01</span><span>PRODUCTION-GRADE PROTOTYPE</span></div>
       <h2 id="project-story-title">One technician calls out. Seven repair orders and their promised times are now at risk.</h2>
-      <p className="story-lede">FieldOps AI is a service-department decision system for the moments when the morning plan breaks. It converts a sudden capacity gap into a feasible shop-load recovery plan, gives the service manager evidence to review, and records every consequential action.</p>
+      <p className="story-lede">FieldOps AI turns a sudden shop-capacity gap into a feasible recovery plan. The service manager reviews the evidence, approves the moves, and keeps every consequential action auditable.</p>
       <div className="story-actions"><Button onClick={onSimulate} disabled={busy || !backendOnline}><Sparkles/> {busy ? "Evaluating disruption..." : "Run the live disruption"}</Button><Button variant="outline" onClick={onPolicy} disabled={busy || !backendOnline}><Settings2/> Inspect decision policy</Button></div>
-      <div className="story-pillars">
-        <article><span>THE OPERATING PROBLEM</span><strong>A call-out can destabilize the entire lane plan</strong><p>The shop foreman must protect promised completion times while checking certification, skill, bay and equipment access, staged parts, technician load, and overtime.</p></article>
-        <article><span>THE DECISION SYSTEM</span><strong>Feasible repair-order moves before tradeoffs</strong><p>Hard constraints remove assignments the shop cannot safely execute. The optimizer ranks the remaining plans against explicit service objectives.</p></article>
-        <article><span>THE CONTROL BOUNDARY</span><strong>AI recommends. Service leadership authorizes.</strong><p>Repair-order reassignment, advisor outreach, and execution remain approval-gated, versioned, reversible, and auditable.</p></article>
-      </div>
+      <figure className="story-visual">
+        <Image src="/images/service-department-operations.webp" alt="A service advisor and service manager reviewing a repair plan inside an active automotive service department" fill priority sizes="(max-width: 1050px) calc(100vw - 40px), 46vw"/>
+        <figcaption><span><small>01</small><strong>Capacity fails</strong></span><span><small>02</small><strong>AI builds recovery</strong></span><span><small>03</small><strong>Manager authorizes</strong></span></figcaption>
+      </figure>
     </div>
     <aside className="story-case" aria-label="Live operating scenario">
       <div className="case-signal"><span>LIVE OPERATING SCENARIO</span><span className="case-live"><i/> READY</span></div>
-      <div className="case-incident"><span><AlertTriangle/> SHOP CAPACITY FAILURE</span><strong>Technician T-274 unavailable</strong><p>Seven active repair orders require immediate load balancing before their customer-promised completion times.</p></div>
+      <div className="case-incident"><span><AlertTriangle/> SHOP CAPACITY FAILURE</span><strong>Technician T-274 unavailable</strong><p>Seven active repair orders now compete for qualified capacity.</p></div>
       <div className="decision-path" aria-label="Decision path">
         <div><span>01</span><strong>Ingest</strong><small>Disruption persisted</small></div><ArrowRight/>
         <div><span>02</span><strong>Constrain</strong><small>Ineligible moves removed</small></div><ArrowRight/>
@@ -104,7 +104,7 @@ function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { pla
         </div>
         <div className="trace-context"><strong>{serviceOperation}</strong><span>Skill verified</span><span>Capacity checked</span><span>Approval gated</span></div>
       </div>
-      <div className="story-application"><ShieldCheck/><div><span>REAL-LIFE APPLICATION</span><p>Built for dealership service managers, shop foremen, advisors, and technicians managing same-day repair-order flow. Scenario data is synthetic; the workflow operates end to end.</p></div></div>
+      <div className="story-application"><ShieldCheck/><div><span>BUILT FOR DEALERSHIP SERVICE OPERATIONS</span></div></div>
     </aside>
   </section>;
 }
