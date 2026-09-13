@@ -57,7 +57,7 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
 14. Select **Capacity Planning** to inspect the 14-day demand forecast, uncertainty ceiling, and skill-level staffing risk.
 15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
-16. Select **Simulation Lab** to inspect the latest enterprise-scale benchmark and release regression gates.
+16. Select **Simulation Lab** to focus a dealership workload profile, inspect the visual constraint screen, and verify the latest release-readiness gates.
 17. Run a new benchmark suite, compare it with the previous baseline, and export the persisted CSV evidence report.
 
 ## Optimization model
