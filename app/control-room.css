@@ -745,6 +745,13 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
 .confidence-score { color: var(--signal); font: 700 .76rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .scenario-name input, .outcome-form input, .outcome-form textarea, .escalation-input textarea { border-color: #344149; border-radius: 2px; background: #090f13; color: #dce4e7; }
 .scenario-name input:focus { border-color: var(--signal); box-shadow: 0 0 0 2px rgba(86,229,194,.12); }
+.scenario-range > span b { color: var(--amber); }
+.scenario-range input { accent-color: var(--amber); }
+.scenario-range small i { background: #344149; }
+.forecast-boundary svg, .capacity-empty svg { color: var(--amber); }
+.skill-risk-list b { color: var(--signal); }
+.capacity-actions > div > span { border: 1px solid #315e52; border-radius: 2px; background: #10231f; color: var(--signal); }
+.capacity-audit > div > span { background: var(--amber); }
 .forecast-boundary, .benchmark-boundary, .model-note, .method-note, .safety-control, .policy-note, .solver-note, .baseline-card, .baseline-empty { border: 1px solid #2e3b42; border-radius: 2px; background: #0c1418; color: #8c99a0; }
 .forecast-boundary strong, .benchmark-boundary strong, .model-note strong, .method-note strong, .safety-control strong, .policy-note strong, .solver-note strong { color: #d7e0e3; }
 .coverage-track { border-radius: 0; background: #222d34; }
