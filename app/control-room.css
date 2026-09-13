@@ -604,27 +604,30 @@ button.certification-row.selected { background: rgba(86,229,194,.075); box-shado
 .ro-form-card { isolation: isolate; }
 .ro-form-card::before { content: ""; position: absolute; z-index: 0; inset: 0; pointer-events: none; opacity: .17; background-image: repeating-linear-gradient(0deg, transparent 0 27px, rgba(130,160,166,.28) 27px 28px), repeating-linear-gradient(90deg, transparent 0 33%, rgba(130,160,166,.2) 33% calc(33% + 1px)); mask-image: linear-gradient(180deg, transparent 8%, #000 24%, #000 86%, transparent); }
 .ro-form-card > * { position: relative; z-index: 1; }
-.bay-card { position: relative; min-height: 184px; overflow: hidden; padding: 12px; border: 1px solid #2b3b42; border-top: 3px solid #458c7b; background: linear-gradient(155deg, rgba(22,34,39,.96), rgba(11,18,22,.98)); }
+.bay-card { position: relative; min-height: 204px; overflow: hidden; padding: 10px; border: 1px solid #bbb8ad; border-top: 4px solid #458c7b; background: linear-gradient(145deg, #faf9f3, #ece9df); box-shadow: 0 8px 20px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.5); color: #263034; }
+.bay-card.ro-form-card::before { opacity: .36; background-image: repeating-linear-gradient(0deg, transparent 0 20px, rgba(103,111,110,.13) 20px 21px), linear-gradient(105deg, transparent 0 64%, rgba(132,123,104,.08) 64% 65%, transparent 65%); mask-image: linear-gradient(180deg, transparent 0, #000 18%, #000 94%, transparent); }
 .bay-card.orange { border-top-color: #c85d43; }
 .bay-card.purple { border-top-color: #4d9abb; }
 .bay-card.yellow { border-top-color: #b3792e; }
-.bay-card.offline { border-color: #66382f; border-top-color: #ff7254; background: linear-gradient(155deg, rgba(45,25,22,.96), rgba(18,15,15,.98)); }
-.bay-card.open { border-style: dashed; border-top-color: var(--signal); background: rgba(13,27,27,.72); }
-.bay-head { display: flex; align-items: center; justify-content: space-between; color: #65747c; font: 700 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
-.bay-head strong { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #405057; color: #cbd6d9; font-size: .61rem; }
-.bay-form-fields { display: grid; grid-template-columns: .72fr 1fr; margin-top: 10px; border: 1px solid #35464d; background: rgba(8,14,17,.58); }
-.bay-form-fields > span { min-width: 0; padding: 6px 7px; border-right: 1px solid #35464d; }
-.bay-form-fields > span:first-child { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid #35464d; }
-.bay-form-fields > span:nth-child(2) { border-right: 1px solid #35464d; }
+.bay-card.offline { border-color: #cf8d82; border-top-color: #dd5f4b; background: linear-gradient(145deg, #fff9f5, #eee5dd); }
+.bay-card.open { border-style: dashed; border-top-style: solid; border-top-color: #2f9279; background: linear-gradient(145deg, #f4faf6, #e4eee8); }
+.bay-document-label { display: block; overflow: hidden; padding-bottom: 6px; border-bottom: 1px solid #8a9393; color: #526065; font: 800 .42rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; text-overflow: ellipsis; white-space: nowrap; }
+.bay-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 0 6px; color: #546166; font: 800 .59rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.bay-head strong { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid #7c8788; background: rgba(255,255,255,.5); color: #263236; font-size: .59rem; }
+.bay-form-fields { display: grid; grid-template-columns: .72fr 1fr; border: 1px solid #7e898a; background: rgba(255,255,255,.62); }
+.bay-form-fields > span { min-width: 0; border-right: 1px solid #7e898a; }
+.bay-form-fields > span:first-child { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid #7e898a; }
+.bay-form-fields > span:nth-child(2) { border-right: 1px solid #7e898a; }
 .bay-form-fields > span:last-child { border-right: 0; }
 .bay-form-fields small, .bay-form-fields b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bay-form-fields small, .bay-form-line small { color: #607078; font: 700 .48rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
-.bay-form-fields b { margin-top: 5px; color: #dfe7e9; font: 700 .62rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.bay-form-line { min-height: 43px; padding: 7px; border: 1px solid #35464d; border-top: 0; background: repeating-linear-gradient(0deg, rgba(8,14,17,.42) 0 20px, rgba(56,75,81,.22) 20px 21px); }
-.bay-form-line b { display: block; overflow: hidden; margin-top: 7px; color: #87959c; font-size: .62rem; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
-.bay-form-status { display: block; margin-top: 9px; color: var(--signal); font: 700 .54rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
-.bay-card.offline .bay-form-status { color: #ff8e74; }
-.bay-card.yellow .bay-form-status { color: var(--amber); }
+.bay-form-fields small, .bay-form-line small { padding: 4px 6px; background: #dce5e6; color: #435157; font: 800 .46rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.bay-form-fields b { padding: 5px 6px 6px; color: #182328; font: 800 .61rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.bay-form-line { min-height: 45px; border: 1px solid #7e898a; border-top: 0; background: repeating-linear-gradient(0deg, rgba(255,255,255,.65) 0 20px, rgba(220,218,209,.72) 20px 21px); }
+.bay-form-line small { display: block; border-bottom: 1px solid #7e898a; }
+.bay-form-line b { display: block; overflow: hidden; padding: 7px 6px; color: #38454a; font-size: .59rem; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+.bay-form-status { display: inline-flex; margin-top: 8px; padding: 4px 6px; border: 1px solid currentColor; background: rgba(40,125,104,.08); color: #287d68; font: 800 .49rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+.bay-card.offline .bay-form-status { background: rgba(189,72,54,.08); color: #b44736; }
+.bay-card.yellow .bay-form-status { background: rgba(160,105,28,.08); color: #9a651d; }
 
 .decision-panel { min-height: 551px; }
 .decision-panel .panel-heading button { color: #65737c; }
@@ -1067,7 +1070,7 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
   .map-surface { height: 360px; }
   .shop-surface { min-height: 620px; padding-inline: 12px; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .bay-card { min-height: 184px; }
+  .bay-card { min-height: 204px; }
   .map-coordinate { display: none; }
   .decision-list { display: block; }
   .panel-heading { padding-inline: 14px; }
