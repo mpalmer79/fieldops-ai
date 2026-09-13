@@ -1,8 +1,26 @@
 "use client";
 
+import type { CSSProperties, KeyboardEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, Check, CheckCircle2, Clock3, Download, FlaskConical, Gauge, RefreshCw, ServerCog, ShieldCheck, XCircle, Zap } from "lucide-react";
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  Download,
+  FlaskConical,
+  Gauge,
+  Network,
+  RefreshCw,
+  ServerCog,
+  ShieldCheck,
+  Users,
+  Wrench,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type BenchmarkResult = {
@@ -49,6 +67,15 @@ type Snapshot = {
   boundaries: { scope: string; excluded: string; interpretation: string };
 };
 
+const profileMeta = {
+  small: { code: "01", short: "Rooftop", scenario: "Single-rooftop recovery", pressure: "Localized capacity loss" },
+  regional: { code: "02", short: "Regional", scenario: "Regional service group", pressure: "Multi-rooftop disruption" },
+  enterprise: { code: "03", short: "Enterprise", scenario: "Enterprise dealer network", pressure: "Group-wide demand surge" },
+  peak: { code: "04", short: "Peak", scenario: "Peak service load", pressure: "Maximum modeled pressure" },
+} as const;
+
+type ProfileKey = keyof typeof profileMeta;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...init, cache: "no-store", headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
   const body = await response.json().catch(() => ({})) as Record<string, unknown>;
@@ -68,12 +95,13 @@ function percentDelta(value: number) {
   return `${value > 0 ? "+" : ""}${number(value, 1)}%`;
 }
 
-function BenchmarkMetric({ icon, label, value, detail, tone = "" }: { icon: React.ReactNode; label: string; value: string; detail: string; tone?: string }) {
-  return <div className={`benchmark-metric ${tone}`}><span>{icon}</span><div><small>{label}</small><strong>{value}</strong><p>{detail}</p></div></div>;
+function profileDetails(profileKey: string) {
+  return profileMeta[profileKey as ProfileKey] ?? profileMeta.small;
 }
 
 export function SimulationBenchmark() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<ProfileKey>("regional");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -85,7 +113,7 @@ export function SimulationBenchmark() {
       setError(null);
       return data;
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Benchmark evidence is unavailable");
+      setError(cause instanceof Error ? cause.message : "Simulation evidence is unavailable");
       throw cause;
     }
   }, []);
@@ -96,14 +124,16 @@ export function SimulationBenchmark() {
   }, [load]);
 
   const runSuite = useCallback(async () => {
-    setBusy(true); setError(null); setNotice(null);
+    setBusy(true);
+    setError(null);
+    setNotice(null);
     try {
       const data = await request<Snapshot>("/api/benchmarks/run", { method: "POST", body: JSON.stringify({ idempotencyKey: `benchmark-ui-${crypto.randomUUID()}` }) });
       setSnapshot(data);
-      setNotice(`Benchmark ${data.run.id.slice(-8)} completed. ${data.gates.filter(gate => gate.passed).length} of ${data.gates.length} regression gates passed.`);
+      setNotice(`Stress suite ${data.run.id.slice(-8)} completed. ${data.gates.filter(gate => gate.passed).length} of ${data.gates.length} release gates passed.`);
       return { runId: data.run.id, status: data.run.status, totalEvaluations: data.run.totalEvaluations, throughput: data.run.throughput, p95ShardMs: data.run.p95ShardMs };
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Benchmark execution failed");
+      setError(cause instanceof Error ? cause.message : "Stress suite execution failed");
       throw cause;
     } finally {
       setBusy(false);
@@ -116,8 +146,8 @@ export function SimulationBenchmark() {
     const lifecycle = new AbortController();
     void Promise.resolve(context.registerTool({
       name: "run_enterprise_benchmark",
-      title: "Run enterprise benchmark",
-      description: "Execute and persist the deterministic FieldOps constraint benchmark across four workload scales.",
+      title: "Run dealership stress suite",
+      description: "Execute and persist the deterministic FieldOps recovery benchmark across four dealership workload scales.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: { readOnlyHint: false, untrustedContentHint: false },
       execute: async () => runSuite(),
@@ -125,33 +155,111 @@ export function SimulationBenchmark() {
     return () => lifecycle.abort();
   }, [runSuite]);
 
-  const chartData = useMemo(() => snapshot?.results.map(result => ({
-    name: result.profileKey === "regional" ? "Regional" : result.profileKey === "enterprise" ? "Enterprise" : result.profileKey === "peak" ? "Peak" : "Small",
-    throughput: Math.round(result.throughput),
-    p95: result.p95ShardMs,
+  const resultsByScale = useMemo(() => snapshot?.results.map(result => ({
+    ...result,
+    meta: profileDetails(result.profileKey),
   })) ?? [], [snapshot?.results]);
 
-  if (!snapshot) return <div className="benchmark-loading"><RefreshCw/><strong>Loading benchmark evidence</strong><span>Retrieving persisted scale tests and regression gates.</span>{error && <button onClick={() => void load()}>Retry</button>}</div>;
+  function handleProfileKeyDown(event: KeyboardEvent<HTMLButtonElement>, profile: ProfileKey) {
+    const profiles = resultsByScale.map(result => result.profileKey as ProfileKey);
+    const currentIndex = profiles.indexOf(profile);
+    const nextIndex = event.key === "ArrowRight" || event.key === "ArrowDown" ? (currentIndex + 1) % profiles.length : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (currentIndex - 1 + profiles.length) % profiles.length : event.key === "Home" ? 0 : event.key === "End" ? profiles.length - 1 : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const nextProfile = profiles[nextIndex];
+    setSelectedProfile(nextProfile);
+    document.getElementById(`simulation-tab-${nextProfile}`)?.focus();
+  }
+
+  if (!snapshot) return <div className="simulation-lab-loading" role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"} aria-busy={!error}><RefreshCw aria-hidden="true"/><strong>{error ? "Simulation evidence unavailable" : "Loading simulation evidence"}</strong><span>{error ?? "Retrieving the latest dealership stress test."}</span>{error && <button type="button" onClick={() => void load()}>Retry</button>}</div>;
+
+  const activeResult = snapshot.results.find(result => result.profileKey === selectedProfile) ?? snapshot.results[0];
+  if (!activeResult) return <div className="simulation-lab-loading" role="alert"><AlertTriangle aria-hidden="true"/><strong>No simulation profiles found</strong><button type="button" onClick={() => void load()}>Refresh evidence</button></div>;
 
   const canRun = snapshot.operator.role === "supervisor" || snapshot.operator.role === "admin";
   const passedGates = snapshot.gates.filter(gate => gate.passed).length;
-  return <section className="simulation-benchmark">
-    <div className="benchmark-intro"><div><span className="eyebrow"><FlaskConical/> Scale simulation and evidence</span><h2>Enterprise benchmark lab</h2><p>Measure the constraint kernel, preserve every run, and stop regressions before release.</p></div><div className={`benchmark-verdict ${snapshot.run.status.toLowerCase()}`}><span>Latest regression verdict</span><strong>{snapshot.run.status === "PASSED" ? <CheckCircle2/> : <XCircle/>}{snapshot.run.status}</strong><small>{passedGates} of {snapshot.gates.length} gates passed · {snapshot.run.suiteVersion}</small></div></div>
-    {error && <div className="benchmark-alert error"><XCircle/><span>{error}</span><button onClick={() => void load()}>Refresh evidence</button></div>}
-    {notice && <div className="benchmark-alert success"><CheckCircle2/><span>{notice}</span></div>}
-    <div className="benchmark-metrics">
-      <BenchmarkMetric icon={<ServerCog/>} label="Evaluations" value={compact(snapshot.run.totalEvaluations)} detail={`${snapshot.run.profileCount} workload profiles · ${snapshot.run.iterations} replays`}/>
-      <BenchmarkMetric icon={<Zap/>} label="Throughput" value={`${compact(snapshot.run.throughput)}/sec`} detail="Measured server-side kernel rate"/>
-      <BenchmarkMetric icon={<Clock3/>} label="p95 shard latency" value={`${number(snapshot.run.p95ShardMs, 3)} ms`} detail={`${number(snapshot.run.environment.shardSize ?? 1_000)} work orders per shard`}/>
-      <BenchmarkMetric icon={<ShieldCheck/>} label="Constraint violations" value={snapshot.run.zeroViolationPassed ? "0" : "Detected"} detail={snapshot.run.deterministicPassed ? "Deterministic replay verified" : "Replay mismatch detected"} tone={snapshot.run.zeroViolationPassed ? "safe" : "warning"}/>
+  const readiness = Math.round(passedGates / Math.max(snapshot.gates.length, 1) * 100);
+  const maxOrders = Math.max(...snapshot.results.map(result => result.workOrders), 1);
+  const acceptedSegments = Math.max(1, Math.round(activeResult.feasibleRate / 5));
+  const activeMeta = profileDetails(activeResult.profileKey);
+
+  return <section className="simulation-lab" aria-busy={busy}>
+    <header className="simulation-lab-hero">
+      <div className="simulation-lab-copy">
+        <span><FlaskConical/> PREDEPLOYMENT RECOVERY TEST</span>
+        <h2>Stress the recovery engine before the service day does.</h2>
+        <p>Prove that dealership-scale disruptions remain fast, deterministic, and free of invalid assignments.</p>
+        <div className="simulation-lab-actions">
+          <Button onClick={() => void runSuite()} disabled={busy || !canRun} aria-describedby={!canRun ? "simulation-role-boundary" : undefined}><RefreshCw className={busy ? "spinning" : ""} aria-hidden="true"/> {busy ? "Running all scales..." : "Run stress suite"}</Button>
+          <a href={snapshot.reportUrl}><Download/> Export evidence</a>
+        </div>
+        {!canRun && <p id="simulation-role-boundary" className="role-boundary">Running the stress suite requires supervisor access.</p>}
+      </div>
+      <div className={`simulation-readiness ${snapshot.run.status.toLowerCase()}`}>
+        <div className="simulation-readiness-ring" style={{ "--readiness": `${readiness}%` } as CSSProperties}><span><strong>{readiness}</strong><small>/ 100</small></span></div>
+        <div><span>RELEASE READINESS</span><strong>{snapshot.run.status === "PASSED" ? <CheckCircle2/> : <XCircle/>}{snapshot.run.status}</strong><small>{passedGates} of {snapshot.gates.length} controls verified</small></div>
+      </div>
+    </header>
+
+    {error && <div className="simulation-lab-alert error" role="alert"><XCircle aria-hidden="true"/><span>{error}</span><button type="button" onClick={() => void load()}>Refresh evidence</button></div>}
+    {notice && <div className="simulation-lab-alert success" role="status" aria-live="polite" aria-atomic="true"><CheckCircle2 aria-hidden="true"/><span>{notice}</span></div>}
+
+    <section className="simulation-profile-panel">
+      <header><div><span>01 / SELECT FOCUS</span><h3>Dealership workload scale</h3></div><small>The full suite runs all four profiles</small></header>
+      <div className="simulation-profile-tabs" role="tablist" aria-label="Simulation focus profile">
+        {resultsByScale.map(result => <button key={result.profileKey} id={`simulation-tab-${result.profileKey}`} type="button" role="tab" aria-selected={selectedProfile === result.profileKey} aria-controls={`simulation-panel-${result.profileKey}`} tabIndex={selectedProfile === result.profileKey ? 0 : -1} className={selectedProfile === result.profileKey ? "selected" : ""} onClick={() => setSelectedProfile(result.profileKey as ProfileKey)} onKeyDown={event => handleProfileKeyDown(event, result.profileKey as ProfileKey)}>
+          <span>{result.meta.code}</span>
+          <div><strong>{result.meta.short}</strong><small>{compact(result.workOrders)} repair orders</small></div>
+          <div className="simulation-scale-meter"><i style={{ width: `${Math.max(6, result.workOrders / maxOrders * 100)}%` }}/></div>
+        </button>)}
+      </div>
+    </section>
+
+    <div className="simulation-stage-grid">
+      <article id={`simulation-panel-${activeResult.profileKey}`} className="simulation-pressure-card" role="tabpanel" aria-labelledby={`simulation-tab-${activeResult.profileKey}`} tabIndex={0}>
+        <header><div><span>02 / APPLY PRESSURE</span><h3>{activeMeta.scenario}</h3><p>{activeMeta.pressure}</p></div><strong>{activeResult.iterations} deterministic replays</strong></header>
+        <div className="simulation-operating-scale">
+          <div><Wrench/><span><small>REPAIR ORDERS</small><strong>{number(activeResult.workOrders)}</strong></span></div>
+          <div><Users/><span><small>TECHNICIANS</small><strong>{number(activeResult.technicians)}</strong></span></div>
+          <div><Network/><span><small>ROOFTOPS</small><strong>{activeResult.territories}</strong></span></div>
+        </div>
+        <div className="simulation-decision-path" aria-label="Simulation decision path">
+          <span><i>01</i><small>LOAD</small><strong>{compact(activeResult.evaluations)} evaluations</strong></span><ArrowRight/>
+          <span><i>02</i><small>SCREEN</small><strong>{number(activeResult.hardRejectRate, 1)}% removed</strong></span><ArrowRight/>
+          <span><i>03</i><small>SCORE</small><strong>{number(activeResult.feasibleRate, 1)}% feasible</strong></span><ArrowRight/>
+          <span><i>04</i><small>VERIFY</small><strong>{activeResult.constraintViolations} violations</strong></span>
+        </div>
+        <div className="simulation-candidate-map">
+          <div><span>CANDIDATE ASSIGNMENT SCREEN</span><small><i/> feasible <i/> hard reject</small></div>
+          <div>{Array.from({ length: 20 }, (_, index) => <i key={index} className={index < acceptedSegments ? "accepted" : "rejected"}/>)}</div>
+        </div>
+        <footer>
+          <div><Zap/><span><small>DECISION THROUGHPUT</small><strong>{compact(activeResult.throughput)} / sec</strong></span></div>
+          <div><Clock3/><span><small>1,000 RO SHARD P95</small><strong>{number(activeResult.p95ShardMs, 3)} ms</strong></span></div>
+          <div><ShieldCheck/><span><small>INVALID MOVES ACCEPTED</small><strong>{activeResult.constraintViolations}</strong></span></div>
+        </footer>
+      </article>
+
+      <aside className="simulation-gates-card">
+        <header><div><span>03 / RELEASE VERDICT</span><h3>Operational controls</h3></div><Gauge/></header>
+        <div className="simulation-gate-list">{snapshot.gates.map(gate => <div key={gate.key} className={gate.passed ? "passed" : "failed"}><span>{gate.passed ? <Check/> : <XCircle/>}</span><div><strong>{gate.label}</strong><small>{gate.evidence}</small></div></div>)}</div>
+        {snapshot.baseline ? <div className="simulation-baseline"><span>VERSUS PREVIOUS RUN</span><div><strong className={snapshot.baseline.throughputDeltaPct >= 0 ? "better" : "worse"}>{percentDelta(snapshot.baseline.throughputDeltaPct)}</strong><small>throughput</small><strong className={snapshot.baseline.p95DeltaPct <= 0 ? "better" : "worse"}>{percentDelta(snapshot.baseline.p95DeltaPct)}</strong><small>latency</small></div></div> : <div className="simulation-baseline empty"><ServerCog/><p>Run the suite again to establish a performance baseline.</p></div>}
+      </aside>
     </div>
-    <div className="benchmark-primary-grid">
-      <article className="benchmark-card benchmark-chart-card"><div className="benchmark-card-heading"><div><h3>Performance by workload scale</h3><p>Constraint evaluations per second and p95 latency for 1,000-record shards</p></div><div className="benchmark-actions"><a href={snapshot.reportUrl}><Download/> Export CSV</a><Button onClick={() => void runSuite()} disabled={busy || !canRun}><RefreshCw className={busy ? "spinning" : ""}/> {busy ? "Running suite..." : "Run benchmark"}</Button></div></div><div className="benchmark-chart" aria-label="Benchmark throughput and latency by workload profile"><ResponsiveContainer width="100%" height="100%"><ComposedChart data={chartData} margin={{ top: 10, right: 2, left: -8, bottom: 0 }}><CartesianGrid stroke="#e9edf1" vertical={false}/><XAxis dataKey="name" tick={{ fontSize: 11, fill: "#78838e" }} axisLine={false} tickLine={false}/><YAxis yAxisId="throughput" tick={{ fontSize: 11, fill: "#78838e" }} axisLine={false} tickLine={false} tickFormatter={compact}/><YAxis yAxisId="latency" orientation="right" tick={{ fontSize: 11, fill: "#78838e" }} axisLine={false} tickLine={false} unit=" ms"/><Tooltip contentStyle={{ borderRadius: 9, border: "1px solid #dce2e7", fontSize: 12 }} formatter={(value, name) => name === "p95 shard latency" ? [`${number(Number(value), 3)} ms`, name] : [`${number(Number(value))}/sec`, name]}/><Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }}/><Bar yAxisId="throughput" dataKey="throughput" name="Evaluation throughput" fill="#4a58d8" radius={[5, 5, 0, 0]}/><Line yAxisId="latency" type="monotone" dataKey="p95" name="p95 shard latency" stroke="#d67b2d" strokeWidth={3} dot={{ r: 4, fill: "#d67b2d" }}/></ComposedChart></ResponsiveContainer></div><div className="benchmark-boundary"><ShieldCheck/><span><strong>Measured boundary</strong>{snapshot.boundaries.scope}</span></div></article>
-      <aside className="benchmark-card gate-card"><div className="benchmark-card-heading"><div><h3>Release regression gates</h3><p>Every condition must pass for a green suite</p></div><Gauge/></div><div className="gate-list">{snapshot.gates.map(gate => <div key={gate.key} className={gate.passed ? "passed" : "failed"}><span>{gate.passed ? <Check/> : <XCircle/>}</span><div><strong>{gate.label}</strong><small>{gate.evidence}</small></div></div>)}</div>{snapshot.baseline ? <div className="baseline-card"><span>Previous run comparison</span><div><strong className={snapshot.baseline.throughputDeltaPct >= 0 ? "better" : "worse"}>{percentDelta(snapshot.baseline.throughputDeltaPct)}</strong><small>throughput</small><strong className={snapshot.baseline.p95DeltaPct <= 0 ? "better" : "worse"}>{percentDelta(snapshot.baseline.p95DeltaPct)}</strong><small>p95 latency</small></div></div> : <div className="baseline-empty"><Activity/><span>A second run will establish the first performance baseline.</span></div>}</aside>
-    </div>
-    <div className="benchmark-secondary-grid">
-      <article className="benchmark-card results-card"><div className="benchmark-card-heading"><div><h3>Scale profile evidence</h3><p>Persisted measurements from the latest benchmark run</p></div><span>{snapshot.run.id.slice(-8)}</span></div><div className="benchmark-table-wrap"><table><thead><tr><th>Profile</th><th>Work orders</th><th>Technicians</th><th>Territories</th><th>Evaluations</th><th>Throughput</th><th>p95 shard</th><th>Hard rejects</th><th>Checksum</th></tr></thead><tbody>{snapshot.results.map(result => <tr key={result.profileKey}><td><strong>{result.label}</strong></td><td>{number(result.workOrders)}</td><td>{number(result.technicians)}</td><td>{result.territories}</td><td>{number(result.evaluations)}</td><td>{compact(result.throughput)}/sec</td><td>{number(result.p95ShardMs, 3)} ms</td><td>{number(result.hardRejectRate, 1)}%</td><td><code>{result.checksum}</code></td></tr>)}</tbody></table></div></article>
-      <article className="benchmark-card methodology-card"><div className="benchmark-card-heading"><div><h3>Method and limits</h3><p>What this evidence proves and what it does not</p></div><AlertTriangle/></div><dl><div><dt>Runtime</dt><dd>{snapshot.run.environment.runtime}</dd></div><div><dt>Workload</dt><dd>{snapshot.run.environment.dataset}</dd></div><div><dt>Kernel</dt><dd>{snapshot.run.environment.kernel}</dd></div><div><dt>Seed</dt><dd>{snapshot.run.seed}</dd></div><div><dt>Engine</dt><dd>{snapshot.run.engineVersion}</dd></div><div><dt>Completed</dt><dd>{new Date(snapshot.run.completedAt).toLocaleString()}</dd></div></dl><div className="method-note"><strong>Excluded from the measurement</strong><p>{snapshot.boundaries.excluded}</p></div><p className="interpretation">{snapshot.boundaries.interpretation}</p><div className="benchmark-audit"><h4>Recent benchmark audit</h4>{snapshot.audit.slice(0, 4).map(item => <div key={item.id}><span/><p><strong>{item.action.replaceAll("_", " ").toLowerCase()}</strong><small>{item.actor_role} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></p></div>)}</div></article>
-    </div>
+
+    <section className="simulation-outcome-strip" aria-label="Latest simulation outcomes">
+      <div><small>TOTAL EVALUATIONS</small><strong>{compact(snapshot.run.totalEvaluations)}</strong><span>Across {snapshot.run.profileCount} dealership scales</span></div>
+      <div><small>PORTFOLIO THROUGHPUT</small><strong>{compact(snapshot.run.throughput)} / sec</strong><span>Server-side constraint kernel</span></div>
+      <div><small>WORST-CASE P95</small><strong>{number(snapshot.run.p95ShardMs, 3)} ms</strong><span>Gate remains below 150 ms</span></div>
+      <div><small>HARD VIOLATIONS</small><strong>{snapshot.run.zeroViolationPassed ? "ZERO" : "FOUND"}</strong><span>{snapshot.run.deterministicPassed ? "Replay verified" : "Replay mismatch"}</span></div>
+    </section>
+
+    <details className="simulation-evidence">
+      <summary><span><ServerCog/> Technical evidence and measurement limits</span><ChevronDown/></summary>
+      <div className="simulation-evidence-body">
+        <div className="simulation-table-wrap"><table><caption className="sr-only">Stress-suite results by dealership workload profile</caption><thead><tr><th scope="col">Profile</th><th scope="col">Repair orders</th><th scope="col">Technicians</th><th scope="col">Rooftops</th><th scope="col">Evaluations</th><th scope="col">Throughput</th><th scope="col">p95 shard</th><th scope="col">Hard rejects</th><th scope="col">Checksum</th></tr></thead><tbody>{snapshot.results.map(result => <tr key={result.profileKey}><th scope="row"><strong>{result.label}</strong></th><td>{number(result.workOrders)}</td><td>{number(result.technicians)}</td><td>{result.territories}</td><td>{number(result.evaluations)}</td><td>{compact(result.throughput)}/sec</td><td>{number(result.p95ShardMs, 3)} ms</td><td>{number(result.hardRejectRate, 1)}%</td><td><code>{result.checksum}</code></td></tr>)}</tbody></table></div>
+        <aside><dl><div><dt>Runtime</dt><dd>{snapshot.run.environment.runtime}</dd></div><div><dt>Dataset</dt><dd>{snapshot.run.environment.dataset}</dd></div><div><dt>Kernel</dt><dd>{snapshot.run.environment.kernel}</dd></div><div><dt>Seed</dt><dd>{snapshot.run.seed}</dd></div><div><dt>Completed</dt><dd>{new Date(snapshot.run.completedAt).toLocaleString()}</dd></div></dl><div className="simulation-limit"><AlertTriangle/><p><strong>Measurement boundary</strong>{snapshot.boundaries.interpretation} {snapshot.boundaries.excluded}</p></div></aside>
+      </div>
+    </details>
   </section>;
 }

@@ -21,39 +21,48 @@ function timestamp() {
   return new Date().toISOString();
 }
 
+function scopedId(operator: Operator, value: string) {
+  return `${operator.workspace_id}:${value}`;
+}
+
+function fixtureId(operator: Operator, value: string) {
+  const prefix = `${operator.workspace_id}:`;
+  return value.startsWith(prefix) ? value.slice(prefix.length) : value;
+}
+
 export async function ensureAgentOpsState(operator: Operator) {
   const database = db();
-  const existing = await database.prepare("SELECT id FROM ai_agents LIMIT 1").first<{ id: string }>();
+  const existing = await database.prepare("SELECT id FROM ai_agents WHERE id = ?").bind(scopedId(operator, "dispatch")).first<{ id: string }>();
   if (existing) return;
   const createdAt = timestamp();
   const agents = [
-    ["dispatch", "Dispatch Agent", "Technician assignment and capacity recovery", "HEALTHY", "dispatch-v2.4.0", "Tech Hub", "HIGH", 12840, 98.7, 2840, 3.1, 0.018],
-    ["recovery", "Recovery Agent", "Same-day disruption containment and exception handling", "DEGRADED", "recovery-v1.8.2", "Field Operations", "HIGH", 4180, 91.2, 6420, 12.3, 0.043],
-    ["parts", "Parts Agent", "Inventory validation and depot availability", "HEALTHY", "parts-v3.1.0", "Service Logistics", "MEDIUM", 9610, 99.1, 1180, 1.4, 0.006],
-    ["communications", "Customer Communication Agent", "Bounded appointment and delay notifications", "HEALTHY", "communications-v2.2.1", "Customer Operations", "MEDIUM", 7340, 97.9, 1980, 5.2, 0.012],
+    ["dispatch", "Shop Load Agent", "Repair-order assignment and technician capacity recovery", "HEALTHY", "dispatch-v2.4.0", "Service Technology", "HIGH", 12840, 98.7, 2840, 3.1, 0.018],
+    ["recovery", "Promise Recovery Agent", "Same-day promise protection and exception handling", "DEGRADED", "recovery-v1.8.2", "Fixed Operations", "HIGH", 4180, 91.2, 6420, 12.3, 0.043],
+    ["parts", "Parts Agent", "Inventory validation and parts-counter availability", "HEALTHY", "parts-v3.1.0", "Parts Operations", "MEDIUM", 9610, 99.1, 1180, 1.4, 0.006],
+    ["communications", "Advisor Communication Agent", "Bounded promise-time and delay notifications", "HEALTHY", "communications-v2.2.1", "Service Experience", "MEDIUM", 7340, 97.9, 1980, 5.2, 0.012],
   ];
   const versions = [
-    ["dispatch-v2.4.0", "dispatch", "2.4.0", "gpt-5.2", "sha256:8f2a17c", '["route_optimizer","technician_directory","policy_engine"]', '["read_routes","propose_assignments"]', "PRODUCTION"],
-    ["dispatch-v2.5.0", "dispatch", "2.5.0", "gpt-5.2", "sha256:47bd110", '["route_optimizer","technician_directory","policy_engine","event_stream"]', '["read_routes","propose_assignments"]', "EVALUATED"],
-    ["recovery-v1.8.2", "recovery", "1.8.2", "gpt-5.2", "sha256:315d6bb", '["impact_analyzer","route_optimizer","policy_engine"]', '["read_routes","propose_recovery"]', "PRODUCTION"],
-    ["recovery-v1.9.0", "recovery", "1.9.0", "gpt-5.2", "sha256:ea16490", '["impact_analyzer","route_optimizer","policy_engine","customer_window"]', '["read_routes","propose_recovery"]', "EVALUATED"],
-    ["parts-v3.1.0", "parts", "3.1.0", "gpt-5-mini", "sha256:a93f4d2", '["inventory_api","depot_directory"]', '["read_inventory"]', "PRODUCTION"],
+    ["dispatch-v2.4.0", "dispatch", "2.4.0", "gpt-5.2", "sha256:8f2a17c", '["shop_load_optimizer","technician_directory","policy_engine"]', '["read_repair_orders","propose_assignments"]', "PRODUCTION"],
+    ["dispatch-v2.5.0", "dispatch", "2.5.0", "gpt-5.2", "sha256:47bd110", '["shop_load_optimizer","technician_directory","policy_engine","event_stream"]', '["read_repair_orders","propose_assignments"]', "EVALUATED"],
+    ["recovery-v1.8.2", "recovery", "1.8.2", "gpt-5.2", "sha256:315d6bb", '["impact_analyzer","shop_load_optimizer","policy_engine"]', '["read_repair_orders","propose_recovery"]', "PRODUCTION"],
+    ["recovery-v1.9.0", "recovery", "1.9.0", "gpt-5.2", "sha256:ea16490", '["impact_analyzer","shop_load_optimizer","policy_engine","promise_time"]', '["read_repair_orders","propose_recovery"]', "EVALUATED"],
+    ["parts-v3.1.0", "parts", "3.1.0", "gpt-5-mini", "sha256:a93f4d2", '["inventory_api","parts_location_directory"]', '["read_inventory"]', "PRODUCTION"],
     ["communications-v2.2.1", "communications", "2.2.1", "gpt-5-mini", "sha256:10df7ce", '["template_library","notification_queue"]', '["draft_notification","queue_with_approval"]', "PRODUCTION"],
   ];
   const statements: D1PreparedStatement[] = [
-    ...agents.map(values => database.prepare("INSERT OR IGNORE INTO ai_agents (id,name,responsibility,status,current_version_id,owner_team,risk_tier,daily_decisions,success_rate,avg_latency_ms,escalation_rate,cost_per_decision,record_version,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,?)").bind(...values, createdAt)),
-    ...versions.map(values => database.prepare("INSERT OR IGNORE INTO agent_versions (id,agent_id,version,model,prompt_hash,tools_json,permissions_json,status,record_version,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,1,?,?,?)").bind(...values, operator.id, createdAt, createdAt)),
-    ...agents.map(values => database.prepare("INSERT OR IGNORE INTO evaluation_suites (id,agent_id,name,task_success_threshold,policy_compliance_threshold,hallucination_threshold,tool_accuracy_threshold,latency_threshold_ms,sample_size,created_at) VALUES (?,?,?,95,100,1,98,6000,500,?)").bind(`suite-${values[0]}`, values[0], `${values[1]} production gate`, createdAt)),
+    ...agents.map(values => database.prepare("INSERT OR IGNORE INTO ai_agents (id,name,responsibility,status,current_version_id,owner_team,risk_tier,daily_decisions,success_rate,avg_latency_ms,escalation_rate,cost_per_decision,record_version,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1,?)").bind(scopedId(operator, String(values[0])), values[1], values[2], values[3], scopedId(operator, String(values[4])), values[5], values[6], values[7], values[8], values[9], values[10], values[11], createdAt)),
+    ...versions.map(values => database.prepare("INSERT OR IGNORE INTO agent_versions (id,agent_id,version,model,prompt_hash,tools_json,permissions_json,status,record_version,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,1,?,?,?)").bind(scopedId(operator, String(values[0])), scopedId(operator, String(values[1])), values[2], values[3], values[4], values[5], values[6], values[7], operator.id, createdAt, createdAt)),
+    ...agents.map(values => database.prepare("INSERT OR IGNORE INTO evaluation_suites (id,agent_id,name,task_success_threshold,policy_compliance_threshold,hallucination_threshold,tool_accuracy_threshold,latency_threshold_ms,sample_size,created_at) VALUES (?,?,?,95,100,1,98,6000,500,?)").bind(scopedId(operator, `suite-${values[0]}`), scopedId(operator, String(values[0])), `${values[1]} production gate`, createdAt)),
   ];
   await database.batch(statements);
 
   const baselineVersions = ["dispatch-v2.4.0", "dispatch-v2.5.0", "recovery-v1.8.2", "recovery-v1.9.0", "parts-v3.1.0", "communications-v2.2.1"];
-  await database.batch(baselineVersions.map((versionId, index) => evaluationStatement(database, `eval-seed-${index}`, versionId, `suite-${versionId.split("-")[0]}`, profiles[versionId], operator.id, createdAt)));
+  await database.batch(baselineVersions.map((versionId, index) => evaluationStatement(database, scopedId(operator, `eval-seed-${index}`), scopedId(operator, versionId), scopedId(operator, `suite-${versionId.split("-")[0]}`), profiles[versionId], operator.id, createdAt)));
   await database.batch([
-    database.prepare("INSERT OR IGNORE INTO agent_deployments (id,agent_id,version_id,environment,status,traffic_percentage,previous_version_id,deployed_by,created_at,completed_at) VALUES ('deployment-dispatch-baseline','dispatch','dispatch-v2.4.0','PRODUCTION','ACTIVE',100,NULL,?,?,?)").bind(operator.id, createdAt, createdAt),
-    database.prepare("INSERT OR IGNORE INTO agent_deployments (id,agent_id,version_id,environment,status,traffic_percentage,previous_version_id,deployed_by,created_at,completed_at) VALUES ('deployment-recovery-baseline','recovery','recovery-v1.8.2','PRODUCTION','ACTIVE',100,NULL,?,?,?)").bind(operator.id, createdAt, createdAt),
-    database.prepare("INSERT OR IGNORE INTO agent_incidents (id,agent_id,evaluation_run_id,severity,category,summary,status,detected_at,resolved_at) VALUES ('incident-recovery-timeout','recovery','eval-seed-3','HIGH','Tool timeout','Recovery planning exceeded the six-second production gate in 18 cases.','OPEN',?,NULL)").bind(createdAt),
-    database.prepare("INSERT OR IGNORE INTO agent_incidents (id,agent_id,evaluation_run_id,severity,category,summary,status,detected_at,resolved_at) VALUES ('incident-recovery-policy','recovery','eval-seed-3','HIGH','Policy conflict','Two policy paths produced actions outside the approved escalation boundary.','OPEN',?,NULL)").bind(createdAt),
+    database.prepare("INSERT OR IGNORE INTO agent_deployments (id,agent_id,version_id,environment,status,traffic_percentage,previous_version_id,deployed_by,created_at,completed_at) VALUES (?,?,?,'PRODUCTION','ACTIVE',100,NULL,?,?,?)").bind(scopedId(operator, "deployment-dispatch-baseline"), scopedId(operator, "dispatch"), scopedId(operator, "dispatch-v2.4.0"), operator.id, createdAt, createdAt),
+    database.prepare("INSERT OR IGNORE INTO agent_deployments (id,agent_id,version_id,environment,status,traffic_percentage,previous_version_id,deployed_by,created_at,completed_at) VALUES (?,?,?,'PRODUCTION','ACTIVE',100,NULL,?,?,?)").bind(scopedId(operator, "deployment-recovery-baseline"), scopedId(operator, "recovery"), scopedId(operator, "recovery-v1.8.2"), operator.id, createdAt, createdAt),
+    database.prepare("INSERT OR IGNORE INTO agent_incidents (id,agent_id,evaluation_run_id,severity,category,summary,status,detected_at,resolved_at) VALUES (?,?,?,'HIGH','Tool timeout','Recovery planning exceeded the six-second production gate in 18 cases.','OPEN',?,NULL)").bind(scopedId(operator, "incident-recovery-timeout"), scopedId(operator, "recovery"), scopedId(operator, "eval-seed-3"), createdAt),
+    database.prepare("INSERT OR IGNORE INTO agent_incidents (id,agent_id,evaluation_run_id,severity,category,summary,status,detected_at,resolved_at) VALUES (?,?,?,'HIGH','Policy conflict','Two policy paths produced actions outside the approved escalation boundary.','OPEN',?,NULL)").bind(scopedId(operator, "incident-recovery-policy"), scopedId(operator, "recovery"), scopedId(operator, "eval-seed-3"), createdAt),
   ]);
 }
 
@@ -74,16 +83,17 @@ function serializeEvaluation(row: EvaluationRow | null) {
 export async function getAgentOpsSnapshot(operator: Operator) {
   await ensureAgentOpsState(operator);
   const database = db();
+  const workspacePattern = `${operator.workspace_id}:%`;
   const [agentResult, versionResult, suiteResult, deploymentResult, incidentResult] = await Promise.all([
-    database.prepare("SELECT * FROM ai_agents ORDER BY CASE status WHEN 'DEGRADED' THEN 0 WHEN 'PAUSED' THEN 1 ELSE 2 END, name").all<AgentRow>(),
-    database.prepare("SELECT * FROM agent_versions ORDER BY agent_id, created_at DESC, version DESC").all<VersionRow>(),
-    database.prepare("SELECT * FROM evaluation_suites ORDER BY agent_id").all<SuiteRow>(),
-    database.prepare("SELECT * FROM agent_deployments ORDER BY created_at DESC LIMIT 20").all(),
-    database.prepare("SELECT * FROM agent_incidents ORDER BY CASE severity WHEN 'HIGH' THEN 0 WHEN 'MEDIUM' THEN 1 ELSE 2 END, detected_at DESC LIMIT 20").all(),
+    database.prepare("SELECT * FROM ai_agents WHERE id LIKE ? ORDER BY CASE status WHEN 'DEGRADED' THEN 0 WHEN 'PAUSED' THEN 1 ELSE 2 END, name").bind(workspacePattern).all<AgentRow>(),
+    database.prepare("SELECT * FROM agent_versions WHERE created_by = ? ORDER BY agent_id, created_at DESC, version DESC").bind(operator.id).all<VersionRow>(),
+    database.prepare("SELECT * FROM evaluation_suites WHERE agent_id LIKE ? ORDER BY agent_id").bind(workspacePattern).all<SuiteRow>(),
+    database.prepare("SELECT * FROM agent_deployments WHERE deployed_by = ? ORDER BY created_at DESC LIMIT 20").bind(operator.id).all(),
+    database.prepare("SELECT * FROM agent_incidents WHERE agent_id LIKE ? ORDER BY CASE severity WHEN 'HIGH' THEN 0 WHEN 'MEDIUM' THEN 1 ELSE 2 END, detected_at DESC LIMIT 20").bind(workspacePattern).all(),
   ]);
   const latestEvaluations = new Map<string, ReturnType<typeof serializeEvaluation>>();
   for (const version of versionResult.results) {
-    const evaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE version_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(version.id).first<EvaluationRow>();
+    const evaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE version_id = ? AND created_by = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(version.id, operator.id).first<EvaluationRow>();
     latestEvaluations.set(version.id, serializeEvaluation(evaluation));
   }
   const suites = new Map(suiteResult.results.map(suite => [suite.agent_id, { id: suite.id, name: suite.name, taskSuccessThreshold: suite.task_success_threshold, policyComplianceThreshold: suite.policy_compliance_threshold, hallucinationThreshold: suite.hallucination_threshold, toolAccuracyThreshold: suite.tool_accuracy_threshold, latencyThresholdMs: suite.latency_threshold_ms, sampleSize: suite.sample_size }]));
@@ -107,10 +117,10 @@ export async function getAgentOpsSnapshot(operator: Operator) {
 export async function runAgentEvaluation(operator: Operator, versionId: string) {
   requireRole(operator, "supervisor");
   const database = db();
-  const version = await database.prepare("SELECT * FROM agent_versions WHERE id = ?").bind(versionId).first<VersionRow>();
+  const version = await database.prepare("SELECT * FROM agent_versions WHERE id = ? AND created_by = ?").bind(versionId, operator.id).first<VersionRow>();
   if (!version) throw new OperationError(404, "Agent version not found", "VERSION_NOT_FOUND");
   if (version.status === "ROLLED_BACK" || version.status === "SUPERSEDED") throw new OperationError(409, "Archived versions cannot be evaluated", "INVALID_VERSION_STATE");
-  const profile = profiles[versionId];
+  const profile = profiles[fixtureId(operator, versionId)];
   if (!profile) throw new OperationError(422, "No bounded evaluation fixture exists for this version", "UNSUPPORTED_EVALUATION");
   const suite = await database.prepare("SELECT * FROM evaluation_suites WHERE agent_id = ?").bind(version.agent_id).first<SuiteRow>();
   if (!suite) throw new OperationError(500, "Evaluation suite not found", "SUITE_NOT_FOUND");
@@ -119,19 +129,19 @@ export async function runAgentEvaluation(operator: Operator, versionId: string) 
   const status = passes(profile) ? "PASSED" : "FAILED";
   await database.batch([
     evaluationStatement(database, runId, versionId, suite.id, profile, operator.id, completedAt),
-    database.prepare("UPDATE agent_versions SET status = CASE WHEN status IN ('DRAFT','EVALUATED') THEN 'EVALUATED' ELSE status END, record_version = record_version + 1, updated_at = ? WHERE id = ?").bind(completedAt, versionId),
+    database.prepare("UPDATE agent_versions SET status = CASE WHEN status IN ('DRAFT','EVALUATED') THEN 'EVALUATED' ELSE status END, record_version = record_version + 1, updated_at = ? WHERE id = ? AND created_by = ?").bind(completedAt, versionId, operator.id),
     auditStatement(database, `audit-${runId}`, "agent_version", versionId, `EVALUATION_${status}`, version.status, version.status, operator, { runId, sampleSize: profile.sample_size, gates }),
   ]);
   if (status === "FAILED") {
     const failures = JSON.parse(profile.failures_json) as Array<{ category: string; count: number }>;
     await database.batch(failures.slice(0, 3).map((failure, index) => database.prepare("INSERT OR IGNORE INTO agent_incidents (id,agent_id,evaluation_run_id,severity,category,summary,status,detected_at,resolved_at) VALUES (?,?,?,?,?,?, 'OPEN',?,NULL)").bind(`incident-${runId}-${index}`, version.agent_id, runId, index === 0 ? "HIGH" : "MEDIUM", failure.category, `${failure.count} of ${profile.sample_size} evaluation cases failed in this category.`, completedAt)));
   }
-  const evaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE id = ?").bind(runId).first<EvaluationRow>();
+  const evaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE id = ? AND created_by = ?").bind(runId, operator.id).first<EvaluationRow>();
   return serializeEvaluation(evaluation);
 }
 
-async function latestPassingEvaluation(versionId: string) {
-  const evaluation = await db().prepare("SELECT * FROM evaluation_runs WHERE version_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(versionId).first<EvaluationRow>();
+async function latestPassingEvaluation(operator: Operator, versionId: string) {
+  const evaluation = await db().prepare("SELECT * FROM evaluation_runs WHERE version_id = ? AND created_by = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(versionId, operator.id).first<EvaluationRow>();
   if (!evaluation || evaluation.status !== "PASSED") throw new OperationError(409, "The latest evaluation does not pass every production gate", "EVALUATION_GATE_FAILED");
   return evaluation;
 }
@@ -139,10 +149,10 @@ async function latestPassingEvaluation(versionId: string) {
 export async function promoteAgentVersion(operator: Operator, input: { versionId: string; target: "SHADOW" | "PRODUCTION"; expectedVersion: number }) {
   requireRole(operator, "admin");
   const database = db();
-  const version = await database.prepare("SELECT * FROM agent_versions WHERE id = ?").bind(input.versionId).first<VersionRow>();
+  const version = await database.prepare("SELECT * FROM agent_versions WHERE id = ? AND created_by = ?").bind(input.versionId, operator.id).first<VersionRow>();
   if (!version) throw new OperationError(404, "Agent version not found", "VERSION_NOT_FOUND");
   if (version.record_version !== input.expectedVersion) throw new OperationError(409, "Agent version changed since it was loaded", "STALE_VERSION");
-  await latestPassingEvaluation(version.id);
+  await latestPassingEvaluation(operator, version.id);
   const requiredStatus = input.target === "SHADOW" ? "EVALUATED" : "SHADOW";
   if (version.status !== requiredStatus) throw new OperationError(409, `Version must be ${requiredStatus.toLowerCase()} before promotion to ${input.target.toLowerCase()}`, "INVALID_PROMOTION");
   const promotedAt = timestamp();
@@ -158,7 +168,7 @@ export async function promoteAgentVersion(operator: Operator, input: { versionId
   } else {
     const agent = await database.prepare("SELECT * FROM ai_agents WHERE id = ?").bind(version.agent_id).first<AgentRow>();
     if (!agent) throw new OperationError(404, "Agent not found", "AGENT_NOT_FOUND");
-    const evaluation = await latestPassingEvaluation(version.id);
+    const evaluation = await latestPassingEvaluation(operator, version.id);
     await database.batch([
       database.prepare("UPDATE agent_versions SET status = 'SUPERSEDED', record_version = record_version + 1, updated_at = ? WHERE id = ? AND id != ?").bind(promotedAt, agent.current_version_id, version.id),
       database.prepare("UPDATE ai_agents SET current_version_id = ?, status = 'HEALTHY', success_rate = ?, avg_latency_ms = ?, escalation_rate = ?, record_version = record_version + 1, updated_at = ? WHERE id = ?").bind(version.id, evaluation.task_success, evaluation.p95_latency_ms, Math.max(0.5, 100 - evaluation.task_success), promotedAt, agent.id),
@@ -173,14 +183,14 @@ export async function promoteAgentVersion(operator: Operator, input: { versionId
 export async function rollbackAgentDeployment(operator: Operator, input: { agentId: string; expectedVersion: number }) {
   requireRole(operator, "admin");
   const database = db();
-  const agent = await database.prepare("SELECT * FROM ai_agents WHERE id = ?").bind(input.agentId).first<AgentRow>();
+  const agent = await database.prepare("SELECT * FROM ai_agents WHERE id = ? AND id LIKE ?").bind(input.agentId, `${operator.workspace_id}:%`).first<AgentRow>();
   if (!agent) throw new OperationError(404, "Agent not found", "AGENT_NOT_FOUND");
   if (agent.record_version !== input.expectedVersion) throw new OperationError(409, "Agent changed since it was loaded", "STALE_AGENT");
   const deployment = await database.prepare("SELECT * FROM agent_deployments WHERE agent_id = ? AND version_id = ? AND environment = 'PRODUCTION' AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1").bind(agent.id, agent.current_version_id).first<{ id: string; previous_version_id: string | null }>();
   if (!deployment?.previous_version_id) throw new OperationError(409, "No prior production version is available for rollback", "ROLLBACK_UNAVAILABLE");
-  const previous = await database.prepare("SELECT * FROM agent_versions WHERE id = ?").bind(deployment.previous_version_id).first<VersionRow>();
+  const previous = await database.prepare("SELECT * FROM agent_versions WHERE id = ? AND created_by = ?").bind(deployment.previous_version_id, operator.id).first<VersionRow>();
   if (!previous) throw new OperationError(404, "Prior production version not found", "VERSION_NOT_FOUND");
-  const priorEvaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE version_id = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(previous.id).first<EvaluationRow>();
+  const priorEvaluation = await database.prepare("SELECT * FROM evaluation_runs WHERE version_id = ? AND created_by = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(previous.id, operator.id).first<EvaluationRow>();
   const rolledBackAt = timestamp();
   const updated = await database.prepare("UPDATE ai_agents SET current_version_id = ?, success_rate = COALESCE(?,success_rate), avg_latency_ms = COALESCE(?,avg_latency_ms), record_version = record_version + 1, updated_at = ? WHERE id = ? AND record_version = ? RETURNING *").bind(previous.id, priorEvaluation?.task_success ?? null, priorEvaluation?.p95_latency_ms ?? null, rolledBackAt, agent.id, input.expectedVersion).first<AgentRow>();
   if (!updated) throw new OperationError(409, "Agent changed during rollback", "STALE_AGENT");

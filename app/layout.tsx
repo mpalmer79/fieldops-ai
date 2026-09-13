@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./control-room.css";
 
 export const metadata: Metadata = {
-  title: "FieldOps AI | Dispatch Command",
-  description: "AI-assisted field service dispatch, routing, and operational recovery.",
+  title: "FieldOps AI | Automotive Service Operations",
+  description: "A production-grade dealership service decision system for repair-order recovery, technician capacity, human approval, and auditable execution.",
   other: {
     "codex-preview": "development",
   },

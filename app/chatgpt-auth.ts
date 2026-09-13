@@ -22,7 +22,15 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
-  if (!userId || !email) return null;
+  if (!userId || !email) {
+    if (process.env.PUBLIC_DEMO_MODE !== "true") return null;
+    return {
+      userId: "fieldops-public-demo",
+      displayName: "Portfolio Operator",
+      email: "demo@fieldops-ai.local",
+      fullName: "Portfolio Operator",
+    };
+  }
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
   const fullName =
