@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -160,10 +160,21 @@ export function SimulationBenchmark() {
     meta: profileDetails(result.profileKey),
   })) ?? [], [snapshot?.results]);
 
-  if (!snapshot) return <div className="simulation-lab-loading"><RefreshCw/><strong>Loading simulation evidence</strong><span>Retrieving the latest dealership stress test.</span>{error && <button onClick={() => void load()}>Retry</button>}</div>;
+  function handleProfileKeyDown(event: KeyboardEvent<HTMLButtonElement>, profile: ProfileKey) {
+    const profiles = resultsByScale.map(result => result.profileKey as ProfileKey);
+    const currentIndex = profiles.indexOf(profile);
+    const nextIndex = event.key === "ArrowRight" || event.key === "ArrowDown" ? (currentIndex + 1) % profiles.length : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (currentIndex - 1 + profiles.length) % profiles.length : event.key === "Home" ? 0 : event.key === "End" ? profiles.length - 1 : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const nextProfile = profiles[nextIndex];
+    setSelectedProfile(nextProfile);
+    document.getElementById(`simulation-tab-${nextProfile}`)?.focus();
+  }
+
+  if (!snapshot) return <div className="simulation-lab-loading" role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"} aria-busy={!error}><RefreshCw aria-hidden="true"/><strong>{error ? "Simulation evidence unavailable" : "Loading simulation evidence"}</strong><span>{error ?? "Retrieving the latest dealership stress test."}</span>{error && <button type="button" onClick={() => void load()}>Retry</button>}</div>;
 
   const activeResult = snapshot.results.find(result => result.profileKey === selectedProfile) ?? snapshot.results[0];
-  if (!activeResult) return <div className="simulation-lab-loading"><AlertTriangle/><strong>No simulation profiles found</strong><button onClick={() => void load()}>Refresh evidence</button></div>;
+  if (!activeResult) return <div className="simulation-lab-loading" role="alert"><AlertTriangle aria-hidden="true"/><strong>No simulation profiles found</strong><button type="button" onClick={() => void load()}>Refresh evidence</button></div>;
 
   const canRun = snapshot.operator.role === "supervisor" || snapshot.operator.role === "admin";
   const passedGates = snapshot.gates.filter(gate => gate.passed).length;
@@ -172,16 +183,17 @@ export function SimulationBenchmark() {
   const acceptedSegments = Math.max(1, Math.round(activeResult.feasibleRate / 5));
   const activeMeta = profileDetails(activeResult.profileKey);
 
-  return <section className="simulation-lab">
+  return <section className="simulation-lab" aria-busy={busy}>
     <header className="simulation-lab-hero">
       <div className="simulation-lab-copy">
         <span><FlaskConical/> PREDEPLOYMENT RECOVERY TEST</span>
         <h2>Stress the recovery engine before the service day does.</h2>
         <p>Prove that dealership-scale disruptions remain fast, deterministic, and free of invalid assignments.</p>
         <div className="simulation-lab-actions">
-          <Button onClick={() => void runSuite()} disabled={busy || !canRun}><RefreshCw className={busy ? "spinning" : ""}/> {busy ? "Running all scales..." : "Run stress suite"}</Button>
+          <Button onClick={() => void runSuite()} disabled={busy || !canRun} aria-describedby={!canRun ? "simulation-role-boundary" : undefined}><RefreshCw className={busy ? "spinning" : ""} aria-hidden="true"/> {busy ? "Running all scales..." : "Run stress suite"}</Button>
           <a href={snapshot.reportUrl}><Download/> Export evidence</a>
         </div>
+        {!canRun && <p id="simulation-role-boundary" className="role-boundary">Running the stress suite requires supervisor access.</p>}
       </div>
       <div className={`simulation-readiness ${snapshot.run.status.toLowerCase()}`}>
         <div className="simulation-readiness-ring" style={{ "--readiness": `${readiness}%` } as CSSProperties}><span><strong>{readiness}</strong><small>/ 100</small></span></div>
@@ -189,13 +201,13 @@ export function SimulationBenchmark() {
       </div>
     </header>
 
-    {error && <div className="simulation-lab-alert error"><XCircle/><span>{error}</span><button onClick={() => void load()}>Refresh evidence</button></div>}
-    {notice && <div className="simulation-lab-alert success"><CheckCircle2/><span>{notice}</span></div>}
+    {error && <div className="simulation-lab-alert error" role="alert"><XCircle aria-hidden="true"/><span>{error}</span><button type="button" onClick={() => void load()}>Refresh evidence</button></div>}
+    {notice && <div className="simulation-lab-alert success" role="status" aria-live="polite" aria-atomic="true"><CheckCircle2 aria-hidden="true"/><span>{notice}</span></div>}
 
     <section className="simulation-profile-panel">
       <header><div><span>01 / SELECT FOCUS</span><h3>Dealership workload scale</h3></div><small>The full suite runs all four profiles</small></header>
       <div className="simulation-profile-tabs" role="tablist" aria-label="Simulation focus profile">
-        {resultsByScale.map(result => <button key={result.profileKey} role="tab" aria-selected={selectedProfile === result.profileKey} className={selectedProfile === result.profileKey ? "selected" : ""} onClick={() => setSelectedProfile(result.profileKey as ProfileKey)}>
+        {resultsByScale.map(result => <button key={result.profileKey} id={`simulation-tab-${result.profileKey}`} type="button" role="tab" aria-selected={selectedProfile === result.profileKey} aria-controls={`simulation-panel-${result.profileKey}`} tabIndex={selectedProfile === result.profileKey ? 0 : -1} className={selectedProfile === result.profileKey ? "selected" : ""} onClick={() => setSelectedProfile(result.profileKey as ProfileKey)} onKeyDown={event => handleProfileKeyDown(event, result.profileKey as ProfileKey)}>
           <span>{result.meta.code}</span>
           <div><strong>{result.meta.short}</strong><small>{compact(result.workOrders)} repair orders</small></div>
           <div className="simulation-scale-meter"><i style={{ width: `${Math.max(6, result.workOrders / maxOrders * 100)}%` }}/></div>
@@ -204,7 +216,7 @@ export function SimulationBenchmark() {
     </section>
 
     <div className="simulation-stage-grid">
-      <article className="simulation-pressure-card" role="tabpanel">
+      <article id={`simulation-panel-${activeResult.profileKey}`} className="simulation-pressure-card" role="tabpanel" aria-labelledby={`simulation-tab-${activeResult.profileKey}`} tabIndex={0}>
         <header><div><span>02 / APPLY PRESSURE</span><h3>{activeMeta.scenario}</h3><p>{activeMeta.pressure}</p></div><strong>{activeResult.iterations} deterministic replays</strong></header>
         <div className="simulation-operating-scale">
           <div><Wrench/><span><small>REPAIR ORDERS</small><strong>{number(activeResult.workOrders)}</strong></span></div>
@@ -245,7 +257,7 @@ export function SimulationBenchmark() {
     <details className="simulation-evidence">
       <summary><span><ServerCog/> Technical evidence and measurement limits</span><ChevronDown/></summary>
       <div className="simulation-evidence-body">
-        <div className="simulation-table-wrap"><table><thead><tr><th>Profile</th><th>Repair orders</th><th>Technicians</th><th>Rooftops</th><th>Evaluations</th><th>Throughput</th><th>p95 shard</th><th>Hard rejects</th><th>Checksum</th></tr></thead><tbody>{snapshot.results.map(result => <tr key={result.profileKey}><td><strong>{result.label}</strong></td><td>{number(result.workOrders)}</td><td>{number(result.technicians)}</td><td>{result.territories}</td><td>{number(result.evaluations)}</td><td>{compact(result.throughput)}/sec</td><td>{number(result.p95ShardMs, 3)} ms</td><td>{number(result.hardRejectRate, 1)}%</td><td><code>{result.checksum}</code></td></tr>)}</tbody></table></div>
+        <div className="simulation-table-wrap"><table><caption className="sr-only">Stress-suite results by dealership workload profile</caption><thead><tr><th scope="col">Profile</th><th scope="col">Repair orders</th><th scope="col">Technicians</th><th scope="col">Rooftops</th><th scope="col">Evaluations</th><th scope="col">Throughput</th><th scope="col">p95 shard</th><th scope="col">Hard rejects</th><th scope="col">Checksum</th></tr></thead><tbody>{snapshot.results.map(result => <tr key={result.profileKey}><th scope="row"><strong>{result.label}</strong></th><td>{number(result.workOrders)}</td><td>{number(result.technicians)}</td><td>{result.territories}</td><td>{number(result.evaluations)}</td><td>{compact(result.throughput)}/sec</td><td>{number(result.p95ShardMs, 3)} ms</td><td>{number(result.hardRejectRate, 1)}%</td><td><code>{result.checksum}</code></td></tr>)}</tbody></table></div>
         <aside><dl><div><dt>Runtime</dt><dd>{snapshot.run.environment.runtime}</dd></div><div><dt>Dataset</dt><dd>{snapshot.run.environment.dataset}</dd></div><div><dt>Kernel</dt><dd>{snapshot.run.environment.kernel}</dd></div><div><dt>Seed</dt><dd>{snapshot.run.seed}</dd></div><div><dt>Completed</dt><dd>{new Date(snapshot.run.completedAt).toLocaleString()}</dd></div></dl><div className="simulation-limit"><AlertTriangle/><p><strong>Measurement boundary</strong>{snapshot.boundaries.interpretation} {snapshot.boundaries.excluded}</p></div></aside>
       </div>
     </details>

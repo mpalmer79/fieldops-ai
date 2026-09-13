@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { useMemo, useState } from "react";
 import { Activity, ArrowRight, Check, Clock3, Gauge, ShieldCheck, TrendingUp, Wrench } from "lucide-react";
 
@@ -24,6 +25,16 @@ export function PerformanceCommandCenter({ projectedSla, incident }: { projected
   const series = performanceSeries[metric];
   const statusCopy = useMemo(() => incident ? "Recovery plan active" : "Shop operating inside policy", [incident]);
 
+  function handleMetricKeyDown(event: KeyboardEvent<HTMLButtonElement>, current: MetricKey) {
+    const metrics = Object.keys(performanceSeries) as MetricKey[];
+    const currentIndex = metrics.indexOf(current);
+    const nextIndex = event.key === "ArrowRight" ? (currentIndex + 1) % metrics.length : event.key === "ArrowLeft" ? (currentIndex - 1 + metrics.length) % metrics.length : event.key === "Home" ? 0 : event.key === "End" ? metrics.length - 1 : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    setMetric(metrics[nextIndex]);
+    document.getElementById(`performance-tab-${nextIndex}`)?.focus();
+  }
+
   return <div className="performance-command-view">
     <section className="performance-command-intro">
       <div><span className="eyebrow">OPERATING OUTCOMES / CURRENT SHIFT</span><h2>Prove whether the shop is getting better</h2><p>Track customer promises, technician output, and recovery impact from one operating view.</p></div>
@@ -39,9 +50,10 @@ export function PerformanceCommandCenter({ projectedSla, incident }: { projected
 
     <section className="performance-command-layout">
       <div className="performance-trend-card">
-        <header><div><span>7-DAY OPERATING TREND</span><strong>{metric}</strong></div><div className="performance-tabs" aria-label="Choose performance metric">{(Object.keys(performanceSeries) as MetricKey[]).map(option => <button key={option} className={metric === option ? "active" : ""} onClick={() => setMetric(option)}>{option}</button>)}</div></header>
+        <header><div><span>7-DAY OPERATING TREND</span><strong>{metric}</strong></div><div className="performance-tabs" role="tablist" aria-label="Choose performance metric">{(Object.keys(performanceSeries) as MetricKey[]).map((option, index) => <button key={option} id={`performance-tab-${index}`} type="button" role="tab" aria-selected={metric === option} aria-controls="performance-trend-panel" tabIndex={metric === option ? 0 : -1} className={metric === option ? "active" : ""} onClick={() => setMetric(option)} onKeyDown={event => handleMetricKeyDown(event, option)}>{option}</button>)}</div></header>
         <div className="trend-summary"><div><small>Latest</small><strong>{series.latest}</strong><span>{series.direction}</span></div><div><small>Operating target</small><strong>{series.target}</strong></div></div>
-        <div className="performance-chart" aria-label={`${metric} trend for the last seven days`}>
+        <div id="performance-trend-panel" className="performance-chart" role="tabpanel" aria-labelledby={`performance-tab-${(Object.keys(performanceSeries) as MetricKey[]).indexOf(metric)}`}>
+          <span className="sr-only">{`${metric} trend for the last seven days. ${days.map((day, index) => `${day}: ${series.values[index]}${series.unit}`).join(", ")}`}</span>
           <div className="performance-target"><span>Target {series.target}</span></div>
           {series.values.map((value, index) => <div className="performance-column" key={days[index]}><div><i style={{ height: `${series.heights[index]}%` }}/><b>{value}{series.unit}</b></div><span>{days[index]}</span></div>)}
         </div>

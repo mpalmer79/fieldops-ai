@@ -61,9 +61,9 @@ export function TechnicianCommandCenter({ technicians }: { technicians: Technici
 
     <section className="technician-command-layout">
       <div className="technician-load-board">
-        <header><div><span>TEAM LOAD / CURRENT SHIFT</span><strong>Qualified capacity</strong></div><div className="technician-filters" aria-label="Filter technicians">{(["All", "Available", "Load risk"] as Filter[]).map(option => <button key={option} className={filter === option ? "active" : ""} onClick={() => setFilter(option)}>{option}</button>)}</div></header>
+        <header><div><span>TEAM LOAD / CURRENT SHIFT</span><strong>Qualified capacity</strong></div><div className="technician-filters" role="group" aria-label="Filter technicians">{(["All", "Available", "Load risk"] as Filter[]).map(option => <button type="button" key={option} aria-pressed={filter === option} className={filter === option ? "active" : ""} onClick={() => setFilter(option)}>{option}</button>)}</div></header>
         <div className="technician-load-list">
-          {visible.map(technician => <button key={technician.id} className={`technician-load-row ${technician.status.replace(" ", "-").toLowerCase()} ${selected.id === technician.id ? "selected" : ""}`} onClick={() => setSelectedId(technician.id)} aria-pressed={selected.id === technician.id}>
+          {visible.map(technician => <button type="button" key={technician.id} className={`technician-load-row ${technician.status.replace(" ", "-").toLowerCase()} ${selected.id === technician.id ? "selected" : ""}`} onClick={() => setSelectedId(technician.id)} aria-pressed={selected.id === technician.id} aria-controls="selected-technician-inspector" aria-label={`${technician.name}, ${technician.id}, ${technician.specialty}, ${technician.utilization}% load, ${technician.status}, ${technician.stops} active repair orders`}>
             <span className="technician-avatar" style={{ borderColor: technician.color, color: technician.color }}>{technician.initials}</span>
             <span className="technician-identity"><strong>{technician.name}</strong><small>{technician.id} / {technician.specialty}</small></span>
             <span className="technician-load"><span><i style={{ width: `${technician.utilization}%`, background: technician.color }}/></span><small>{technician.utilization}% load</small></span>
@@ -74,7 +74,7 @@ export function TechnicianCommandCenter({ technicians }: { technicians: Technici
         </div>
       </div>
 
-      <aside className={`technician-inspector ${selected.status === "Unavailable" ? "risk" : ""}`} aria-live="polite">
+      <aside id="selected-technician-inspector" className={`technician-inspector ${selected.status === "Unavailable" ? "risk" : ""}`} aria-live="polite" aria-atomic="true">
         <header><span>SELECTED TECHNICIAN</span><strong>{selected.status}</strong></header>
         <div className="technician-profile"><span style={{ borderColor: selected.color, color: selected.color }}>{selected.initials}</span><div><small>{selected.id}</small><h3>{selected.name}</h3><p>{selected.specialty}</p></div></div>
         <div className="technician-capacity"><div className="capacity-dial" style={{ background: `conic-gradient(${selected.color} ${selected.utilization * 3.6}deg, #263239 0deg)` }}><span><strong>{selected.utilization}%</strong><small>Utilized</small></span></div><div><small>Flagged work</small><strong>{selected.miles} hr</strong><small>Active repair orders</small><strong>{selected.stops}</strong></div></div>
@@ -86,9 +86,9 @@ export function TechnicianCommandCenter({ technicians }: { technicians: Technici
 
     <section className="certification-matrix">
       <header><div><span>SHOP SKILL MAP</span><strong>Certification coverage by technician</strong></div><small>Qualified for assignment</small></header>
-      <div className="certification-table" role="table" aria-label="Technician certification coverage">
-        <div className="certification-row certification-head" role="row"><span>Technician</span>{matrixSkills.map(skill => <span key={skill}>{skill}</span>)}</div>
-        {technicians.map(technician => <button className={`certification-row ${selected.id === technician.id ? "selected" : ""}`} key={technician.id} onClick={() => setSelectedId(technician.id)} role="row"><span><i style={{ background: technician.color }}/>{technician.initials} / {technician.id}</span>{matrixSkills.map(skill => <span key={skill}>{(certificationMap[technician.id] ?? []).includes(skill) ? <Check aria-label="Certified"/> : <i aria-label="Not certified"/>}</span>)}</button>)}
+      <div className="certification-table" role="table" aria-label="Technician certification coverage" aria-rowcount={technicians.length + 1} aria-colcount={matrixSkills.length + 1}>
+        <div className="certification-row certification-head" role="row"><span role="columnheader">Technician</span>{matrixSkills.map(skill => <span role="columnheader" key={skill}>{skill}</span>)}</div>
+        {technicians.map(technician => <div className={`certification-row ${selected.id === technician.id ? "selected" : ""}`} key={technician.id} role="row"><span role="rowheader"><button type="button" className="certification-technician-select" onClick={() => setSelectedId(technician.id)} aria-pressed={selected.id === technician.id} aria-controls="selected-technician-inspector" aria-label={`Inspect ${technician.name}, ${technician.id}`}><i aria-hidden="true" style={{ background: technician.color }}/>{technician.initials} / {technician.id}</button></span>{matrixSkills.map(skill => { const certified = (certificationMap[technician.id] ?? []).includes(skill); return <span role="cell" key={skill} aria-label={`${skill}: ${certified ? "certified" : "not certified"}`}>{certified ? <Check aria-hidden="true"/> : <i aria-hidden="true"/>}</span>; })}</div>)}
       </div>
     </section>
   </div>;

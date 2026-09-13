@@ -239,8 +239,8 @@ async function demandHistory() {
   return result.results;
 }
 
-async function latestRun() {
-  return db().prepare("SELECT * FROM forecast_runs WHERE territory = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(TERRITORY).first<ForecastRunRow>();
+async function latestRun(operator: Operator) {
+  return db().prepare("SELECT * FROM forecast_runs WHERE territory = ? AND created_by = ? ORDER BY completed_at DESC, id DESC LIMIT 1").bind(TERRITORY, operator.id).first<ForecastRunRow>();
 }
 
 async function pointsForRun(runId: string) {
@@ -250,13 +250,14 @@ async function pointsForRun(runId: string) {
 
 export async function ensureCapacityPlanningState(operator: Operator) {
   await ensureDemandHistory();
-  if (await latestRun()) return;
+  if (await latestRun(operator)) return;
   await persistForecast(operator, SEED_IDEMPOTENCY_KEY, "INITIAL_FORECAST");
 }
 
 async function persistForecast(operator: Operator, idempotencyKey: string, source: string) {
   const database = db();
-  const existing = await database.prepare("SELECT id FROM forecast_runs WHERE idempotency_key = ?").bind(idempotencyKey).first<{ id: string }>();
+  const scopedIdempotencyKey = `${operator.id}:${idempotencyKey}`;
+  const existing = await database.prepare("SELECT id FROM forecast_runs WHERE idempotency_key = ? AND created_by = ?").bind(scopedIdempotencyKey, operator.id).first<{ id: string }>();
   if (existing) return existing.id;
   const history = await demandHistory();
   const points = forecastFixtures(history);
@@ -270,22 +271,22 @@ async function persistForecast(operator: Operator, idempotencyKey: string, sourc
       INSERT OR IGNORE INTO forecast_runs
       (id, status, model_version, territory, horizon_days, training_window_days, wape, bias, interval_coverage, idempotency_key, input_snapshot_json, created_by, started_at, completed_at)
       VALUES (?, 'COMPLETED', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(runId, MODEL_VERSION, TERRITORY, HORIZON_DAYS, TRAINING_WINDOW_DAYS, metrics.wape, metrics.bias, metrics.intervalCoverage, idempotencyKey, JSON.stringify({ source, historyStart, historyEnd, observationCount: history.length }), operator.id, timestamp, timestamp),
+    `).bind(runId, MODEL_VERSION, TERRITORY, HORIZON_DAYS, TRAINING_WINDOW_DAYS, metrics.wape, metrics.bias, metrics.intervalCoverage, scopedIdempotencyKey, JSON.stringify({ source, historyStart, historyEnd, observationCount: history.length }), operator.id, timestamp, timestamp),
     ...points.map(point => database.prepare(`
       INSERT OR IGNORE INTO forecast_points
       (id, run_id, forecast_date, territory, skill, expected_demand, lower_bound, upper_bound, available_capacity, risk_level, created_at)
       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       WHERE EXISTS (SELECT 1 FROM forecast_runs WHERE id = ? AND idempotency_key = ?)
-    `).bind(`${runId}-${point.date}-${point.skill.toLowerCase()}`, runId, point.date, TERRITORY, point.skill, point.expectedDemand, point.lowerBound, point.upperBound, point.availableCapacity, point.riskLevel, timestamp, runId, idempotencyKey)),
+    `).bind(`${runId}-${point.date}-${point.skill.toLowerCase()}`, runId, point.date, TERRITORY, point.skill, point.expectedDemand, point.lowerBound, point.upperBound, point.availableCapacity, point.riskLevel, timestamp, runId, scopedIdempotencyKey)),
     database.prepare(`
       INSERT OR IGNORE INTO audit_log
       (id, entity_type, entity_id, action, from_status, to_status, actor_id, actor_role, metadata_json, created_at)
       SELECT ?, 'forecast_run', ?, 'DEMAND_FORECAST_COMPLETED', NULL, 'COMPLETED', ?, ?, ?, ?
       WHERE EXISTS (SELECT 1 FROM forecast_runs WHERE id = ? AND idempotency_key = ?)
-    `).bind(`audit-${runId}`, runId, operator.id, operator.role, JSON.stringify({ modelVersion: MODEL_VERSION, horizonDays: HORIZON_DAYS, ...metrics }), timestamp, runId, idempotencyKey),
+    `).bind(`audit-${runId}`, runId, operator.id, operator.role, JSON.stringify({ modelVersion: MODEL_VERSION, horizonDays: HORIZON_DAYS, ...metrics }), timestamp, runId, scopedIdempotencyKey),
   ];
   await database.batch(statements);
-  const canonical = await database.prepare("SELECT id FROM forecast_runs WHERE idempotency_key = ?").bind(idempotencyKey).first<{ id: string }>();
+  const canonical = await database.prepare("SELECT id FROM forecast_runs WHERE idempotency_key = ? AND created_by = ?").bind(scopedIdempotencyKey, operator.id).first<{ id: string }>();
   if (!canonical) throw new OperationError(500, "Demand forecast could not be persisted", "FORECAST_WRITE_FAILED");
   return canonical.id;
 }
@@ -300,13 +301,13 @@ function parseInputSnapshot(value: string) {
 
 async function serializeSnapshot(operator: Operator) {
   const database = db();
-  const run = await latestRun();
+  const run = await latestRun(operator);
   if (!run) throw new OperationError(500, "Demand forecast is unavailable", "FORECAST_NOT_FOUND");
   const points = await pointsForRun(run.id);
-  const scenario = await database.prepare("SELECT * FROM capacity_scenarios WHERE forecast_run_id = ? ORDER BY created_at DESC, id DESC LIMIT 1").bind(run.id).first<ScenarioRow>();
+  const scenario = await database.prepare("SELECT * FROM capacity_scenarios WHERE forecast_run_id = ? AND created_by = ? ORDER BY created_at DESC, id DESC LIMIT 1").bind(run.id, operator.id).first<ScenarioRow>();
   const [actions, auditResult, observationCount] = await Promise.all([
     scenario ? database.prepare("SELECT * FROM capacity_actions WHERE scenario_id = ? ORDER BY priority").bind(scenario.id).all() : Promise.resolve({ results: [] }),
-    database.prepare("SELECT id, entity_type, entity_id, action, from_status, to_status, actor_role, metadata_json, created_at FROM audit_log WHERE entity_type IN ('forecast_run', 'capacity_scenario') ORDER BY created_at DESC LIMIT 10").all(),
+    database.prepare("SELECT id, entity_type, entity_id, action, from_status, to_status, actor_role, metadata_json, created_at FROM audit_log WHERE entity_type IN ('forecast_run', 'capacity_scenario') AND actor_id = ? ORDER BY created_at DESC LIMIT 10").bind(operator.id).all(),
     database.prepare("SELECT COUNT(*) AS count FROM demand_observations WHERE territory = ?").bind(TERRITORY).first<{ count: number }>(),
   ]);
   const totalExpected = points.reduce((sum, point) => sum + point.expected_demand, 0);
@@ -447,7 +448,7 @@ function buildCapacityActions(points: ForecastPointRow[], flexibleCapacity: numb
 export async function createCapacityScenario(operator: Operator, input: ScenarioInput) {
   requireRole(operator, "supervisor");
   validateScenario(input);
-  const run = await latestRun();
+  const run = await latestRun(operator);
   if (!run || run.id !== input.forecastRunId) throw new OperationError(409, "A newer forecast is available. Reload before evaluating this scenario", "STALE_FORECAST");
   const points = await pointsForRun(run.id);
   const adjusted = points.map(point => ({
@@ -488,7 +489,7 @@ export async function approveCapacityScenario(operator: Operator, input: { scena
   requireRole(operator, "supervisor");
   if (!input.scenarioId || !Number.isInteger(input.expectedVersion)) throw new OperationError(400, "scenarioId and expectedVersion are required", "INVALID_CAPACITY_APPROVAL");
   const database = db();
-  const scenario = await database.prepare("SELECT * FROM capacity_scenarios WHERE id = ?").bind(input.scenarioId).first<ScenarioRow>();
+  const scenario = await database.prepare("SELECT * FROM capacity_scenarios WHERE id = ? AND created_by = ?").bind(input.scenarioId, operator.id).first<ScenarioRow>();
   if (!scenario) throw new OperationError(404, "Capacity scenario not found", "CAPACITY_SCENARIO_NOT_FOUND");
   if (scenario.status !== "DRAFT") throw new OperationError(409, "Only a draft capacity scenario can be approved", "INVALID_CAPACITY_TRANSITION");
   const timestamp = now();
@@ -497,14 +498,14 @@ export async function approveCapacityScenario(operator: Operator, input: { scena
     database.prepare(`
       UPDATE capacity_scenarios
       SET status = 'APPROVED', record_version = record_version + 1, approved_by = ?, approved_at = ?, updated_at = ?
-      WHERE id = ? AND status = 'DRAFT' AND record_version = ?
-    `).bind(operator.id, timestamp, timestamp, scenario.id, input.expectedVersion),
+      WHERE id = ? AND created_by = ? AND status = 'DRAFT' AND record_version = ?
+    `).bind(operator.id, timestamp, timestamp, scenario.id, operator.id, input.expectedVersion),
     database.prepare(`
       INSERT OR IGNORE INTO audit_log
       (id, entity_type, entity_id, action, from_status, to_status, actor_id, actor_role, metadata_json, created_at)
       SELECT ?, 'capacity_scenario', ?, 'CAPACITY_PLAN_APPROVED', 'DRAFT', 'APPROVED', ?, ?, ?, ?
-      WHERE EXISTS (SELECT 1 FROM capacity_scenarios WHERE id = ? AND status = 'APPROVED' AND record_version = ?)
-    `).bind(`audit-${scenario.id}-approved-v${nextVersion}`, scenario.id, operator.id, operator.role, JSON.stringify({ forecastRunId: scenario.forecast_run_id, jobsProtected: scenario.jobs_protected, residualGap: scenario.residual_gap, approvalBoundary: "Workforce scheduling handoff only" }), timestamp, scenario.id, nextVersion),
+      WHERE EXISTS (SELECT 1 FROM capacity_scenarios WHERE id = ? AND created_by = ? AND status = 'APPROVED' AND record_version = ?)
+    `).bind(`audit-${scenario.id}-approved-v${nextVersion}`, scenario.id, operator.id, operator.role, JSON.stringify({ forecastRunId: scenario.forecast_run_id, jobsProtected: scenario.jobs_protected, residualGap: scenario.residual_gap, approvalBoundary: "Workforce scheduling handoff only" }), timestamp, scenario.id, operator.id, nextVersion),
   ]);
   if (results[0].meta.changes !== 1) throw new OperationError(409, "Capacity scenario changed since it was loaded", "STALE_CAPACITY_SCENARIO");
   return serializeSnapshot(operator);
