@@ -677,6 +677,47 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
 .agentops-intro p, .capacity-intro p, .benchmark-intro p, .diagnostic-intro p { color: #8b979f; font-size: .88rem; }
 .eyebrow { color: var(--signal); font: 750 .68rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .11em; }
 .capacity-intro .eyebrow { color: var(--amber); }
+.capacity-peak-visual { position: relative; z-index: 1; display: grid; min-width: 330px; grid-template-columns: 1fr 1.12fr; gap: 16px; padding: 14px 16px; border: 1px solid #5b4b2f; background: rgba(20,17,10,.74); }
+.capacity-peak-visual > div:first-child span, .capacity-peak-visual > div:first-child strong, .capacity-peak-visual > div:first-child small { display: block; }
+.capacity-peak-visual > div:first-child span { color: var(--amber); font: 700 .6rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .09em; }
+.capacity-peak-visual > div:first-child strong { margin-top: 7px; color: #f1eee6; font-size: 1.08rem; }
+.capacity-peak-visual > div:first-child small { margin-top: 5px; color: #8d8779; font-size: .63rem; }
+.peak-balance { display: grid; align-content: center; gap: 9px; }
+.peak-balance > span { display: grid; grid-template-columns: 45px 1fr 22px; align-items: center; gap: 6px; }
+.peak-balance small { color: #817b70; font-size: .57rem; }
+.peak-balance i { display: block; height: 6px; max-width: 100%; background: #d49243; }
+.peak-balance span:last-child i { background: var(--signal); }
+.peak-balance b { color: #d8d4ca; font: 700 .61rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+.capacity-day-focus { display: grid; grid-template-columns: 1.2fr repeat(3, 1fr); margin: 14px 16px 0; border: 1px solid #2b383f; background: #0a1115; }
+.capacity-day-focus > div { padding: 10px 12px; border-right: 1px solid #29343b; }
+.capacity-day-focus > div:last-child { border-right: 0; }
+.capacity-day-focus small, .capacity-day-focus strong { display: block; }
+.capacity-day-focus small { color: #64727a; font: 700 .56rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; }
+.capacity-day-focus strong { margin-top: 6px; color: #dfe7e9; font-size: .86rem; }
+.capacity-day-focus .risk strong, .capacity-plan-bridge .risk strong { color: #ff8d78; }
+.capacity-day-focus .safe strong, .capacity-plan-bridge .safe strong { color: var(--signal); }
+.capacity-day-rail { display: grid; grid-template-columns: repeat(14, minmax(44px, 1fr)); gap: 4px; overflow-x: auto; padding: 10px 16px 4px; }
+.capacity-day-rail button { display: grid; min-width: 44px; height: 92px; grid-template-rows: 14px 1fr 14px; gap: 4px; padding: 6px 4px; border: 1px solid #29373e; border-top-width: 2px; background: #0b1216; color: #64737b; cursor: pointer; }
+.capacity-day-rail button:hover { border-color: #46645c; }
+.capacity-day-rail button.selected { border-color: var(--signal); background: #10231f; box-shadow: 0 0 0 1px rgba(86,229,194,.16); }
+.capacity-day-rail button.high { border-top-color: #ff735f; }
+.capacity-day-rail button.medium { border-top-color: var(--amber); }
+.capacity-day-rail button.low { border-top-color: #3f8876; }
+.capacity-day-rail small { overflow: hidden; font: 700 .5rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-overflow: ellipsis; white-space: nowrap; }
+.capacity-day-rail button > span { display: flex; min-height: 48px; align-items: flex-end; justify-content: center; gap: 2px; border-bottom: 1px solid #2d393f; }
+.capacity-day-rail button > span i, .capacity-day-rail button > span b { display: block; width: 7px; min-height: 4px; background: #d49243; }
+.capacity-day-rail button > span b { background: var(--signal); }
+.capacity-day-rail button > strong { color: #708087; font: 700 .52rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.capacity-day-rail button.high > strong { color: #ff8d78; }
+.capacity-day-rail button.medium > strong { color: var(--amber); }
+.capacity-day-rail button.low > strong { color: var(--signal); }
+.forecast-card .forecast-chart { height: 270px; padding-top: 6px; }
+.capacity-plan-bridge { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; padding: 16px; border-bottom: 1px solid #29343b; background: linear-gradient(90deg, rgba(213,146,67,.06), rgba(86,229,194,.045)); }
+.capacity-plan-bridge > div { min-width: 0; padding: 12px; border: 1px solid #2b383f; background: #0a1115; text-align: center; }
+.capacity-plan-bridge small, .capacity-plan-bridge strong { display: block; }
+.capacity-plan-bridge small { color: #68767d; font: 700 .55rem/1.15 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; }
+.capacity-plan-bridge strong { margin-top: 8px; color: #e0e8ea; font-size: 1.2rem; }
+.capacity-plan-bridge > span { color: #65737a; font: 700 .55rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; text-transform: uppercase; }
 .benchmark-intro .eyebrow { color: var(--signal); }
 .diagnostic-intro .eyebrow { color: #68d4ff; }
 .environment, .forecast-context, .benchmark-verdict, .diagnostic-context { min-width: 280px; padding: 13px 15px; border: 1px solid #334048; border-radius: 2px; background: rgba(7,12,15,.56); color: #9facb3; }
@@ -915,6 +956,7 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
   .content { padding: 16px 14px 34px; }
   .agentops-intro, .capacity-intro, .benchmark-intro, .diagnostic-intro { align-items: flex-start; flex-direction: column; padding: 19px; }
   .environment, .forecast-context, .benchmark-verdict, .diagnostic-context { width: 100%; min-width: 0; }
+  .capacity-peak-visual { width: 100%; min-width: 0; }
   .shop-board-intro { align-items: flex-start; flex-direction: column; padding: 19px; }
   .shop-board-pulse { width: 100%; min-width: 0; }
   .shop-board-metrics { grid-template-columns: 1fr 1fr; }
@@ -1007,6 +1049,14 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
   .performance-chart { height: 250px; gap: 4px; margin-inline: 10px; padding-inline: 5px; }
   .performance-column b { font-size: .47rem; }
   .performance-drivers > header { align-items: flex-start; flex-direction: column; }
+  .capacity-day-focus { grid-template-columns: 1fr 1fr; }
+  .capacity-day-focus > div:nth-child(2) { border-right: 0; }
+  .capacity-day-focus > div:nth-child(-n+2) { border-bottom: 1px solid #29343b; }
+  .capacity-day-rail { grid-template-columns: repeat(14, 50px); }
+  .capacity-plan-bridge { grid-template-columns: 1fr 12px 1fr 12px 1fr; gap: 3px; padding: 10px; }
+  .capacity-plan-bridge > div { padding: 9px 5px; }
+  .capacity-plan-bridge small { font-size: .46rem; }
+  .capacity-plan-bridge > span { font-size: .45rem; }
   .map-surface { height: 360px; }
   .shop-surface { min-height: 620px; padding-inline: 12px; }
   .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
