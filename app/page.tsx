@@ -109,6 +109,50 @@ function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { pla
   </section>;
 }
 
+function RecoveryWalkthrough({ plan, status }: { plan: RecoveryPlan; status?: PlanStatus }) {
+  const outcomeStatus = status === "EXECUTED" ? "EXECUTED" : status === "AWAITING_APPROVAL" || status === "APPROVED" ? "PLAN READY" : "LIVE MODEL";
+
+  return <section className="recovery-walkthrough" aria-labelledby="recovery-walkthrough-title">
+    <header className="walkthrough-heading">
+      <div><span>GUIDED RECOVERY / OPERATING LOGIC</span><h2 id="recovery-walkthrough-title">From service disruption to controlled execution</h2></div>
+      <div className="walkthrough-status"><i/><span>{outcomeStatus}</span></div>
+    </header>
+    <div className="walkthrough-flow">
+      <article className="walkthrough-stage disruption-stage">
+        <div className="stage-index"><span>01</span><AlertTriangle/></div>
+        <small>CAPACITY LOSS</small>
+        <strong>1 technician offline</strong>
+        <div className="exposure-meter" aria-label="Seven repair orders exposed"><i/><i/><i/><i/><i/><i/><i/></div>
+        <p>7 customer promises exposed</p>
+      </article>
+      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
+      <article className="walkthrough-stage constraint-stage">
+        <div className="stage-index"><span>02</span><ShieldCheck/></div>
+        <small>CONSTRAINT SCREEN</small>
+        <strong>{plan.scenariosEvaluated.toLocaleString()} scenarios tested</strong>
+        <div className="constraint-chips"><span>Skill</span><span>Bay</span><span>Parts</span><span>Load</span></div>
+        <p>{plan.rejectedCandidates} invalid assignments removed</p>
+      </article>
+      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
+      <article className="walkthrough-stage recovery-stage">
+        <div className="stage-index"><span>03</span><Route/></div>
+        <small>RECOVERY PLAN</small>
+        <strong>{plan.assignments.length} promises preserved</strong>
+        <div className="recovery-comparison"><span><b>7</b> at risk</span><ArrowRight/><span><b>{plan.rescheduled.length}</b> callbacks</span></div>
+        <p>{plan.projectedSla}% projected on time</p>
+      </article>
+      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
+      <article className="walkthrough-stage approval-stage">
+        <div className="stage-index"><span>04</span><Check/></div>
+        <small>HUMAN CONTROL</small>
+        <strong>Manager authorization</strong>
+        <div className="control-ledger"><span>Review</span><span>Approve</span><span>Audit</span></div>
+        <p>Execution remains reversible</p>
+      </article>
+    </div>
+  </section>;
+}
+
 export default function Home() {
   const [selected, setSelected] = useState("Service command");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -224,6 +268,7 @@ export default function Home() {
   {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : <div className="content">{error && <div className="error-banner"><AlertTriangle/><span>{error}</span><button onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner"><Check/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button onClick={() => void rollback()} disabled={busy}><Undo2/> Roll back execution</button>}</div>}
     <ProductStory plan={plan} busy={busy} backendOnline={backendOnline} onSimulate={() => void simulate()} onPolicy={() => setPolicyOpen(true)}/>
     <section className="metrics" aria-label="Today's performance"><Metric code="OTP" label="Promise-time attainment" value={incident ? "91.6%" : "94.1%"} detail="Target 92.0%" trend={incident ? "−2.5%" : "+1.8%"}/><Metric code="WIP" label="Open repair orders" value="25" detail="164.5 sold hours"/><Metric code="EFF" label="Shop efficiency" value={incident ? "106%" : "112%"} detail="Target 105%" trend={incident ? "−6 pts" : "+7 pts"}/><Metric code="RSK" label="At-risk promises" value={incident ? "7" : "2"} detail={incident ? "Manager action required" : "Within recovery range"}/></section>
+    <RecoveryWalkthrough plan={plan} status={activePlan?.status}/>
     <section className="operations-grid"><ShopFloor/><DecisionPanel audit={snapshot?.audit ?? []} activePlan={activePlan} onReview={() => setReviewOpen(true)}/></section><TechnicianRoster technicians={visible} search={search} onSearch={setSearch}/></div>}
   <RecoveryDialog open={reviewOpen} onOpenChange={setReviewOpen} onAccept={() => void accept()} onReject={() => void reject()} plan={plan} weights={weights} busy={busy} persistedPlan={activePlan}/><PolicyDialog open={policyOpen} onOpenChange={setPolicyOpen} weights={weights} onChange={setWeights} onApply={() => void savePolicy(weights)} plan={previewPlan} busy={busy} policyVersion={policyVersion}/></section></main>;
 }
