@@ -184,8 +184,25 @@ export function ServiceCommandV2() {
   }, []);
 
   useEffect(() => {
-    void loadSnapshot();
-  }, [loadSnapshot]);
+    let cancelled = false;
+
+    void api<Snapshot>("/api/operations")
+      .then((data) => {
+        if (cancelled) return;
+        setSnapshot(data);
+        setActivePlan(data.activePlan);
+        setPhase(phaseFromPlan(data.activePlan));
+        setError(null);
+      })
+      .catch((cause: unknown) => {
+        if (cancelled) return;
+        setError(cause instanceof Error ? cause.message : "Operational backend unavailable");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const transition = useCallback(async (action: "approve" | "reject" | "execute", plan: PersistedPlan) => {
     return api<{ plan: PersistedPlan }>("/api/recovery-plans/transition", {
