@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Activity, AlertTriangle, ArrowRight, BrainCircuit, CalendarRange, Check, ChevronDown, CircleDot, FlaskConical, Gauge, Map, Menu, MoreHorizontal, Navigation, Route, Search, Settings2, ShieldCheck, Sparkles, Stethoscope, Undo2, Users, X } from "lucide-react";
@@ -15,6 +14,7 @@ import { ShopBoard } from "@/components/shop-board";
 import { RepairOrdersBoard } from "@/components/repair-orders-board";
 import { TechnicianCommandCenter } from "@/components/technician-command-center";
 import { PerformanceCommandCenter } from "@/components/performance-command-center";
+import { ServiceRecoveryCommand, type RecoveryRunPhase } from "@/components/service-recovery-command";
 import { defaultPolicyWeights, optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
 import { serviceBays } from "@/lib/service-operations-data";
 import { workspaceRoutes, type WorkspaceRoute } from "@/app/control-room/workspace-routes";
@@ -65,99 +65,22 @@ function repairOrderId(value: string) {
   return value.replace(/^WO-/, "RO-");
 }
 
+function recoveryPhase(status?: PlanStatus | null): RecoveryRunPhase {
+  if (status === "AWAITING_APPROVAL" || status === "APPROVED") return "review";
+  if (status === "EXECUTING") return "executing";
+  if (status === "EXECUTED") return "executed";
+  if (status === "REJECTED") return "rejected";
+  if (status === "ROLLING_BACK") return "executing";
+  if (status === "ROLLED_BACK") return "rolled-back";
+  return "ready";
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>(resolve => window.setTimeout(resolve, milliseconds));
+}
+
 function Metric({ code, label, value, detail, trend }: { code: string; label: string; value: string; detail: string; trend?: string }) {
   return <div className="metric-card"><div className="metric-head"><span className="metric-code">{code}</span><div className="metric-label">{label}</div></div><div className="metric-row"><strong>{value}</strong>{trend && <span className="trend">{trend}</span>}</div><span className="metric-detail">{detail}</span><span className="metric-scan" aria-hidden="true"/></div>;
-}
-
-function ProductStory({ plan, busy, backendOnline, onSimulate, onPolicy }: { plan: RecoveryPlan; busy: boolean; backendOnline: boolean; onSimulate: () => void; onPolicy: () => void }) {
-  const tracedAssignment = plan.assignments.find(assignment => repairOrderId(assignment.jobId) === "RO-48372") ?? plan.assignments[0];
-  const [serviceOperation, vehicle] = tracedAssignment?.job.split(" · ") ?? ["Intermittent no-start", "2023 G70"];
-
-  return <section className="product-story" aria-labelledby="project-story-title">
-    <div className="story-narrative">
-      <div className="story-kicker"><span>PORTFOLIO CASE STUDY / 01</span><span>PRODUCTION-GRADE PROTOTYPE</span></div>
-      <h2 id="project-story-title">One technician calls out. Seven repair orders and their promised times are now at risk.</h2>
-      <p className="story-lede">FieldOps AI turns a sudden shop-capacity gap into a feasible recovery plan. The service manager reviews the evidence, approves the moves, and keeps every consequential action auditable.</p>
-      <div className="story-actions"><Button onClick={onSimulate} disabled={busy || !backendOnline}><Sparkles/> {busy ? "Evaluating disruption..." : "Run the live disruption"}</Button><Button variant="outline" onClick={onPolicy} disabled={busy || !backendOnline}><Settings2/> Inspect decision policy</Button></div>
-      <figure className="story-visual">
-        <Image src="/images/service-department-operations.webp" alt="A service advisor and service manager reviewing a repair plan inside an active automotive service department" fill priority sizes="(max-width: 1050px) calc(100vw - 40px), 46vw"/>
-        <figcaption><span><small>01</small><strong>Capacity fails</strong></span><span><small>02</small><strong>AI builds recovery</strong></span><span><small>03</small><strong>Manager authorizes</strong></span></figcaption>
-      </figure>
-    </div>
-    <aside className="story-case" aria-label="Live operating scenario">
-      <div className="case-signal"><span>LIVE OPERATING SCENARIO</span><span className="case-live"><i/> READY</span></div>
-      <div className="case-incident"><span><AlertTriangle/> SHOP CAPACITY FAILURE</span><strong>Technician T-274 unavailable</strong><p>Seven active repair orders now compete for qualified capacity.</p></div>
-      <div className="decision-path" aria-label="Decision path">
-        <div><span>01</span><strong>Ingest</strong><small>Disruption persisted</small></div><ArrowRight/>
-        <div><span>02</span><strong>Constrain</strong><small>Ineligible moves removed</small></div><ArrowRight/>
-        <div><span>03</span><strong>Approve</strong><small>Service manager reviews</small></div><ArrowRight/>
-        <div><span>04</span><strong>Execute</strong><small>RO changes audited</small></div>
-      </div>
-      <div className="story-outcomes"><div><small>Promises preserved</small><strong>{plan.assignments.length} / 7</strong></div><div><small>On-time projection</small><strong>{plan.projectedSla}%</strong></div><div><small>Manager approval</small><strong>Required</strong></div></div>
-      <div className="recovery-trace" aria-label="Representative repair-order recovery">
-        <div className="trace-heading"><span>REPAIR-ORDER RECOVERY / LIVE</span><small>CUSTOMER PROMISE</small></div>
-        <div className="trace-journey">
-          <div className="trace-order">
-            <span>AT RISK</span>
-            <strong>{tracedAssignment ? repairOrderId(tracedAssignment.jobId) : "RO-48372"}</strong>
-            <small>{vehicle}</small>
-          </div>
-          <div className="trace-route" aria-hidden="true"><i/><b/><i/><b/><i/></div>
-          <div className="trace-resolution">
-            <span>RECOVERY PLAN</span>
-            <strong>{tracedAssignment?.to ?? "Amara Patel"}</strong>
-            <small>{tracedAssignment?.window ?? "3:30 PM"} promise</small>
-          </div>
-        </div>
-        <div className="trace-context"><strong>{serviceOperation}</strong><span>Skill verified</span><span>Capacity checked</span><span>Approval gated</span></div>
-      </div>
-      <div className="story-application"><ShieldCheck/><div><span>BUILT FOR DEALERSHIP SERVICE OPERATIONS</span></div></div>
-    </aside>
-  </section>;
-}
-
-function RecoveryWalkthrough({ plan, status }: { plan: RecoveryPlan; status?: PlanStatus }) {
-  const outcomeStatus = status === "EXECUTED" ? "EXECUTED" : status === "AWAITING_APPROVAL" || status === "APPROVED" ? "PLAN READY" : "LIVE MODEL";
-
-  return <section className="recovery-walkthrough" aria-labelledby="recovery-walkthrough-title">
-    <header className="walkthrough-heading">
-      <div><span>GUIDED RECOVERY / OPERATING LOGIC</span><h2 id="recovery-walkthrough-title">From service disruption to controlled execution</h2></div>
-      <div className="walkthrough-status"><i/><span>{outcomeStatus}</span></div>
-    </header>
-    <div className="walkthrough-flow">
-      <article className="walkthrough-stage disruption-stage">
-        <div className="stage-index"><span>01</span><AlertTriangle/></div>
-        <small>CAPACITY LOSS</small>
-        <strong>1 technician offline</strong>
-        <div className="exposure-meter" aria-label="Seven repair orders exposed"><i/><i/><i/><i/><i/><i/><i/></div>
-        <p>7 customer promises exposed</p>
-      </article>
-      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
-      <article className="walkthrough-stage constraint-stage">
-        <div className="stage-index"><span>02</span><ShieldCheck/></div>
-        <small>CONSTRAINT SCREEN</small>
-        <strong>{plan.scenariosEvaluated.toLocaleString()} scenarios tested</strong>
-        <div className="constraint-chips"><span>Skill</span><span>Bay</span><span>Parts</span><span>Load</span></div>
-        <p>{plan.rejectedCandidates} invalid assignments removed</p>
-      </article>
-      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
-      <article className="walkthrough-stage recovery-stage">
-        <div className="stage-index"><span>03</span><Route/></div>
-        <small>RECOVERY PLAN</small>
-        <strong>{plan.assignments.length} promises preserved</strong>
-        <div className="recovery-comparison"><span><b>7</b> at risk</span><ArrowRight/><span><b>{plan.rescheduled.length}</b> callbacks</span></div>
-        <p>{plan.projectedSla}% projected on time</p>
-      </article>
-      <ArrowRight className="walkthrough-arrow" aria-hidden="true"/>
-      <article className="walkthrough-stage approval-stage">
-        <div className="stage-index"><span>04</span><Check/></div>
-        <small>HUMAN CONTROL</small>
-        <strong>Manager authorization</strong>
-        <div className="control-ledger"><span>Review</span><span>Approve</span><span>Audit</span></div>
-        <p>Execution remains reversible</p>
-      </article>
-    </div>
-  </section>;
 }
 
 export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
@@ -168,6 +91,7 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   const [activePlan, setActivePlan] = useState<PersistedPlan | null>(null);
   const [weights, setWeights] = useState<PolicyWeights>(defaultPolicyWeights);
   const [policyVersion, setPolicyVersion] = useState(1);
+  const [runPhase, setRunPhase] = useState<RecoveryRunPhase>("ready");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -213,6 +137,7 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
     try {
       const data = await api<Snapshot>("/api/operations");
       setSnapshot(data); setActivePlan(data.activePlan);
+      setRunPhase(recoveryPhase(data.activePlan?.status));
       setWeights({ sla: data.policy.sla, travel: data.policy.travel, load: data.policy.load, overtime: data.policy.overtime, stability: data.policy.stability });
       setPolicyVersion(data.policy.version); setError(null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Operational backend unavailable"); }
@@ -225,9 +150,19 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   const simulate = useCallback(async () => {
     setBusy(true); setError(null); setNotice(null);
     try {
-      const result = await api<{ plan: PersistedPlan }>("/api/disruptions", { method: "POST", body: JSON.stringify({ technicianId: "T-274", idempotencyKey: `fieldops-ui-${crypto.randomUUID()}` }) });
-      setActivePlan(result.plan); setReviewOpen(true); await loadSnapshot(); return result.plan;
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Disruption simulation failed"); throw cause; }
+      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+      const request = api<{ plan: PersistedPlan }>("/api/disruptions", { method: "POST", body: JSON.stringify({ technicianId: "T-274", idempotencyKey: `fieldops-ui-${crypto.randomUUID()}` }) });
+      setRunPhase("incident");
+      const animate = async () => {
+        await wait(reducedMotion ? 0 : 550);
+        setRunPhase("constraints");
+        await wait(reducedMotion ? 0 : 850);
+        setRunPhase("optimizing");
+        await wait(reducedMotion ? 0 : 900);
+      };
+      const [result] = await Promise.all([request, animate()]);
+      setActivePlan(result.plan); setRunPhase("review"); await loadSnapshot(); return result.plan;
+    } catch (cause) { setRunPhase("ready"); setError(cause instanceof Error ? cause.message : "Disruption simulation failed"); throw cause; }
     finally { setBusy(false); }
   }, [loadSnapshot]);
 
@@ -247,12 +182,12 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
 
   const accept = useCallback(async () => {
     if (!activePlan) return;
-    setBusy(true); setError(null);
+    setBusy(true); setRunPhase("executing"); setError(null);
     try {
       const approved = activePlan.status === "APPROVED" ? activePlan : (await transition("approve", activePlan)).plan;
       setActivePlan(approved);
       const executed = (await transition("execute", approved)).plan;
-      setActivePlan(executed); setReviewOpen(false); setNotice("Recovery plan executed. Five repair orders were reassigned and two advisor callbacks were queued."); await loadSnapshot();
+      setActivePlan(executed); setRunPhase("executed"); setReviewOpen(false); setNotice("Recovery plan executed. Five repair orders were reassigned and two advisor callbacks were queued."); await loadSnapshot();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Plan execution failed"); await loadSnapshot(); }
     finally { setBusy(false); }
   }, [activePlan, loadSnapshot, transition]);
@@ -260,7 +195,7 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   const reject = useCallback(async () => {
     if (!activePlan) return;
     setBusy(true); setError(null);
-    try { const result = await transition("reject", activePlan); setActivePlan(result.plan); setReviewOpen(false); setNotice("Recovery plan rejected and retained in the audit history."); await loadSnapshot(); }
+    try { const result = await transition("reject", activePlan); setActivePlan(result.plan); setRunPhase("rejected"); setReviewOpen(false); setNotice("Recovery plan rejected and retained in the audit history."); await loadSnapshot(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Plan rejection failed"); }
     finally { setBusy(false); }
   }, [activePlan, loadSnapshot, transition]);
@@ -268,7 +203,7 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   const rollback = useCallback(async () => {
     if (!activePlan) return;
     setBusy(true); setError(null);
-    try { const result = await transition("rollback", activePlan); setActivePlan(result.plan); setNotice("Execution rolled back. Original assignments were restored and the compensation was audited."); await loadSnapshot(); }
+    try { const result = await transition("rollback", activePlan); setActivePlan(result.plan); setRunPhase("rolled-back"); setNotice("Execution rolled back. Original assignments were restored and the compensation was audited."); await loadSnapshot(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Rollback failed"); }
     finally { setBusy(false); }
   }, [activePlan, loadSnapshot, transition]);
@@ -301,17 +236,16 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   const shiftDate = snapshot
     ? new Date(snapshot.backend.serverTime).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })
     : "Loading shift";
-  return <main className="app-shell"><aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`} inert={isMobileViewport && !mobileNav} aria-hidden={isMobileViewport && !mobileNav ? true : undefined}>
-    <Link href="/" className="brand"><span className="brand-mark"><Route size={18}/></span><span className="brand-name">FIELD<span>/OPS</span><small>Autonomy console</small></span><span className="brand-index">AI</span></Link><button type="button" className="mobile-close" aria-label="Close navigation" onClick={closeMobileNavigation}><X/></button>
+  return <main className={`app-shell ${specializedView ? "" : "service-command-shell"}`}><aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`} inert={isMobileViewport && !mobileNav} aria-hidden={isMobileViewport && !mobileNav ? true : undefined}>
+    <Link href="/" className="brand"><span className="brand-mark"><Route size={18}/></span><span className="brand-name">FIELD<span>/OPS</span><small>Service intelligence</small></span><span className="brand-index">AI</span></Link><button type="button" className="mobile-close" aria-label="Close navigation" onClick={closeMobileNavigation}><X/></button>
     <div className="territory-code"><span>SERVICE CONTROL</span><strong>ROOFTOP 01 · BOSTON</strong><small>12 BAYS / 27 TECHNICIANS</small></div>
     <nav aria-label="Main navigation"><p>Service operation</p>{workspaceRoutes.map(({ label, slug }, index) => { const Icon = workspaceIcons[slug]; return <button key={slug} type="button" aria-current={workspace.slug === slug ? "page" : undefined} onClick={() => { router.push(`/control-room/${slug}`); if (isMobileViewport) closeMobileNavigation(); window.scrollTo({ top: 0 }); }} className={workspace.slug === slug ? "active" : ""}><span className="nav-index">{String(index + 1).padStart(2, "0")}</span><Icon/><span>{label}</span>{label === "Repair orders" && snapshot && <small>{snapshot.metrics.openRepairOrders}</small>}</button>; })}</nav>
     <div className={`system-card ${backendOnline ? "online" : ""}`}><div><ShieldCheck/><span>System integrity</span></div><strong>{backendOnline ? "Orchestrator online" : "Establishing link"}</strong><p>{backendOnline ? `${snapshot?.backend.persistence} / ${snapshot?.backend.optimizer}` : "Loading operational state"}</p></div>
     <div className="profile"><span>{initials}</span><div><strong>{operatorName}</strong><small>{snapshot ? `${snapshot.operator.role} · authenticated` : "Authenticating"}</small></div><MoreHorizontal/></div>
-  </aside><section className="workspace"><header className="topbar"><button type="button" ref={menuButtonRef} className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation" aria-expanded={mobileNav}><Menu/></button><div className="workspace-title"><span>LIVE WORKSPACE / {selected.toUpperCase()}</span><h1>{viewTitle}</h1><p>{viewDescription}</p></div><div className="topbar-actions"><span className={`data-provenance ${dataProvenance === "LIVE DATA" ? "live" : ""}`} title="Identifies whether this workspace uses persisted runtime data, measured output, or an illustrative reference scenario"><i/>{dataProvenance}</span><div className="operating"><CircleDot/><span><small>Operating mode</small>{operatingMode}</span><ChevronDown/></div><span className="date"><small>Shift date</small>{shiftDate}</span>{!specializedView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy</Button><Button onClick={() => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Working..." : "Run disruption"}</Button></>}</div></header>
-  {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : shopBoardView ? <div className="content shop-board-content"><ShopBoard/></div> : repairOrdersView ? <div className="content repair-orders-content"><RepairOrdersBoard/></div> : techniciansView ? <div className="content technician-command-content"><TechnicianCommandCenter technicians={technicians}/></div> : performanceView ? <div className="content performance-command-content"><PerformanceCommandCenter projectedSla={plan.projectedSla} incident={incident}/></div> : <div className="content">{error && <div className="error-banner" role="alert"><AlertTriangle aria-hidden="true"/><span>{error}</span><button type="button" onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner" role="status" aria-live="polite" aria-atomic="true"><Check aria-hidden="true"/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button type="button" onClick={() => void rollback()} disabled={busy}><Undo2 aria-hidden="true"/> Roll back execution</button>}</div>}
-    <ProductStory plan={plan} busy={busy} backendOnline={backendOnline} onSimulate={() => void simulate()} onPolicy={() => setPolicyOpen(true)}/>
+  </aside><section className="workspace"><header className="topbar"><button type="button" ref={menuButtonRef} className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation" aria-expanded={mobileNav}><Menu/></button><div className="workspace-title"><span>LIVE WORKSPACE / {selected.toUpperCase()}</span><h1>{viewTitle}</h1><p>{viewDescription}</p></div><div className="topbar-actions"><span className={`data-provenance ${dataProvenance === "LIVE DATA" ? "live" : ""}`} title="Identifies whether this workspace uses persisted runtime data, measured output, or an illustrative reference scenario"><i/>{dataProvenance}</span><div className="operating"><CircleDot/><span><small>Operating mode</small>{operatingMode}</span><ChevronDown/></div><span className="date"><small>Shift date</small>{shiftDate}</span>{!specializedView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy</Button><Button onClick={runPhase === "review" ? () => setReviewOpen(true) : () => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Recovery running" : runPhase === "review" ? "Review plan" : "Run disruption"}</Button></>}</div></header>
+  {agentOpsView ? <div className="content agentops-content"><AgentOpsControlTower/></div> : diagnosticView ? <div className="content diagnostic-content"><TechnicianDiagnosticCopilot/></div> : capacityView ? <div className="content capacity-content"><CapacityPlanning/></div> : benchmarkView ? <div className="content benchmark-content"><SimulationBenchmark/></div> : shopBoardView ? <div className="content shop-board-content"><ShopBoard/></div> : repairOrdersView ? <div className="content repair-orders-content"><RepairOrdersBoard/></div> : techniciansView ? <div className="content technician-command-content"><TechnicianCommandCenter technicians={technicians}/></div> : performanceView ? <div className="content performance-command-content"><PerformanceCommandCenter projectedSla={plan.projectedSla} incident={incident}/></div> : <div className="content service-command-content">{error && <div className="error-banner" role="alert"><AlertTriangle aria-hidden="true"/><span>{error}</span><button type="button" onClick={() => void loadSnapshot()}>Retry</button></div>}{notice && <div className="success-banner" role="status" aria-live="polite" aria-atomic="true"><Check aria-hidden="true"/><span>{notice}</span>{activePlan?.status === "EXECUTED" && snapshot?.operator.role === "admin" && <button type="button" onClick={() => void rollback()} disabled={busy}><Undo2 aria-hidden="true"/> Roll back execution</button>}</div>}
+    <ServiceRecoveryCommand plan={plan} phase={runPhase} busy={busy} backendOnline={backendOnline} onRun={() => void simulate()} onReview={() => setReviewOpen(true)} onPolicy={() => setPolicyOpen(true)}/>
     <section className="metrics" aria-label="Today's performance"><Metric code="OTP" label="Promise-time projection" value={snapshot?.metrics.projectedPromiseAttainment == null ? "Pending" : `${snapshot.metrics.projectedPromiseAttainment}%`} detail={snapshot?.metrics.projectedPromiseAttainment == null ? "Run a disruption to calculate" : "Active recovery plan"}/><Metric code="WIP" label="Open repair orders" value={snapshot ? String(snapshot.metrics.openRepairOrders) : "Pending"} detail="Current operational records"/><Metric code="UTIL" label="Technician utilization" value={snapshot?.metrics.averageTechnicianUtilization == null ? "Pending" : `${snapshot.metrics.averageTechnicianUtilization}%`} detail="Average across the active shop team"/><Metric code="RSK" label="At-risk promises" value={snapshot ? String(snapshot.metrics.atRiskPromises) : "Pending"} detail={snapshot && snapshot.metrics.atRiskPromises > 0 ? "Manager review required" : "No current promise risk"}/></section>
-    <RecoveryWalkthrough plan={plan} status={activePlan?.status}/>
     <section className="operations-grid"><ShopFloor openRepairOrders={snapshot?.metrics.openRepairOrders}/><DecisionPanel audit={snapshot?.audit ?? []} activePlan={activePlan} onReview={() => setReviewOpen(true)}/></section><TechnicianRoster technicians={visible} search={search} onSearch={setSearch}/></div>}
   <RecoveryDialog open={reviewOpen} onOpenChange={setReviewOpen} onAccept={() => void accept()} onReject={() => void reject()} plan={plan} weights={weights} busy={busy} persistedPlan={activePlan}/><PolicyDialog open={policyOpen} onOpenChange={setPolicyOpen} weights={weights} onChange={setWeights} onApply={() => void savePolicy(weights)} plan={previewPlan} busy={busy} policyVersion={policyVersion}/></section></main>;
 }

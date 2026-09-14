@@ -17,26 +17,38 @@ describe("landing disruption demonstration", () => {
   it("moves from an idle scenario to an explainable recovery result", () => {
     render(<LandingDisruptionDemo />);
 
-    expect(screen.getByText("Awaiting disruption")).toBeInTheDocument();
+    expect(screen.getByText("Ready to evaluate today’s shop state")).toBeInTheDocument();
     expect(screen.getByText("No assignments execute automatically")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Run disruption" }));
 
-    expect(screen.getByRole("button", { name: "Evaluating..." })).toBeDisabled();
-    expect(screen.getByText("Testing feasible moves")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Recovery running" })).toBeDisabled();
+    expect(screen.getByText("Persisting callout and loading 7 affected repair orders")).toBeInTheDocument();
 
     act(() => {
-      vi.advanceTimersByTime(1_700);
+      vi.advanceTimersByTime(700);
+    });
+
+    expect(screen.getByText("Removing assignments that fail skill, bay, parts, or capacity rules")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(screen.getByText(/Ranking .* feasible recovery plans/)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1_500);
     });
 
     expect(screen.getByText("5 promises protected")).toBeInTheDocument();
-    expect(screen.getAllByText("PROTECTED")).toHaveLength(5);
-    expect(screen.getAllByText("CALLBACK")).toHaveLength(2);
-    expect(screen.getByText("93.6% projected on time")).toBeInTheDocument();
+    expect(screen.getAllByText("ADVISOR CALLBACK")).toHaveLength(2);
+    expect(screen.getByText(/% projected on time$/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open the full recovery workspace" })).toHaveAttribute("href", "/control-room/service-command");
 
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset scenario" }));
 
-    expect(screen.getByText("Awaiting disruption")).toBeInTheDocument();
+    expect(screen.getByText("Ready to evaluate today’s shop state")).toBeInTheDocument();
   });
 
   it("has no automatically detectable accessibility violations", async () => {
