@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ControlRoomShell } from "@/app/control-room/_components/control-room-shell";
 import { getWorkspaceRoute, workspaceRoutes } from "@/app/control-room/workspace-routes";
+import { ServiceCommandV2 } from "@/components/service-command-v2";
 
 type WorkspacePageProps = {
   params: Promise<{ workspace: string }>;
@@ -30,6 +31,10 @@ export default async function WorkspacePage({ params }: WorkspacePageProps) {
 
   if (!route) {
     notFound();
+  }
+
+  if (route.slug === "service-command") {
+    return <ServiceCommandV2 />;
   }
 
   return <ControlRoomShell workspace={route} />;
