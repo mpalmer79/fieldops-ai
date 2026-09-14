@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Activity, AlertTriangle, ArrowRight, BrainCircuit, CalendarRange, Check, ChevronDown, CircleDot, FlaskConical, Gauge, Map, Menu, MoreHorizontal, Navigation, Route, Search, Settings2, ShieldCheck, Sparkles, Stethoscope, Undo2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -84,7 +83,6 @@ function Metric({ code, label, value, detail, trend }: { code: string; label: st
 }
 
 export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
-  const router = useRouter();
   const selected = workspace.label;
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -239,7 +237,7 @@ export function ControlRoomShell({ workspace }: { workspace: WorkspaceRoute }) {
   return <main className={`app-shell ${specializedView ? "" : "service-command-shell"}`}><aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`} inert={isMobileViewport && !mobileNav} aria-hidden={isMobileViewport && !mobileNav ? true : undefined}>
     <Link href="/" className="brand"><span className="brand-mark"><Route size={18}/></span><span className="brand-name">FIELD<span>/OPS</span><small>Service intelligence</small></span><span className="brand-index">AI</span></Link><button type="button" className="mobile-close" aria-label="Close navigation" onClick={closeMobileNavigation}><X/></button>
     <div className="territory-code"><span>SERVICE CONTROL</span><strong>ROOFTOP 01 · BOSTON</strong><small>12 BAYS / 27 TECHNICIANS</small></div>
-    <nav aria-label="Main navigation"><p>Service operation</p>{workspaceRoutes.map(({ label, slug }, index) => { const Icon = workspaceIcons[slug]; return <button key={slug} type="button" aria-current={workspace.slug === slug ? "page" : undefined} onClick={() => { router.push(`/control-room/${slug}`); if (isMobileViewport) closeMobileNavigation(); window.scrollTo({ top: 0 }); }} className={workspace.slug === slug ? "active" : ""}><span className="nav-index">{String(index + 1).padStart(2, "0")}</span><Icon/><span>{label}</span>{label === "Repair orders" && snapshot && <small>{snapshot.metrics.openRepairOrders}</small>}</button>; })}</nav>
+    <nav aria-label="Main navigation"><p>Service operation</p>{workspaceRoutes.map(({ label, slug }, index) => { const Icon = workspaceIcons[slug]; return <Link key={slug} href={`/control-room/${slug}`} aria-current={workspace.slug === slug ? "page" : undefined} onClick={() => { if (isMobileViewport) closeMobileNavigation(); window.scrollTo({ top: 0 }); }} className={`workspace-nav-link ${workspace.slug === slug ? "active" : ""}`}><span className="nav-index">{String(index + 1).padStart(2, "0")}</span><Icon/><span>{label}</span>{label === "Repair orders" && snapshot && <small>{snapshot.metrics.openRepairOrders}</small>}</Link>; })}</nav>
     <div className={`system-card ${backendOnline ? "online" : ""}`}><div><ShieldCheck/><span>System integrity</span></div><strong>{backendOnline ? "Orchestrator online" : "Establishing link"}</strong><p>{backendOnline ? `${snapshot?.backend.persistence} / ${snapshot?.backend.optimizer}` : "Loading operational state"}</p></div>
     <div className="profile"><span>{initials}</span><div><strong>{operatorName}</strong><small>{snapshot ? `${snapshot.operator.role} · authenticated` : "Authenticating"}</small></div><MoreHorizontal/></div>
   </aside><section className="workspace"><header className="topbar"><button type="button" ref={menuButtonRef} className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation" aria-expanded={mobileNav}><Menu/></button><div className="workspace-title"><span>LIVE WORKSPACE / {selected.toUpperCase()}</span><h1>{viewTitle}</h1><p>{viewDescription}</p></div><div className="topbar-actions"><span className={`data-provenance ${dataProvenance === "LIVE DATA" ? "live" : ""}`} title="Identifies whether this workspace uses persisted runtime data, measured output, or an illustrative reference scenario"><i/>{dataProvenance}</span><div className="operating"><CircleDot/><span><small>Operating mode</small>{operatingMode}</span><ChevronDown/></div><span className="date"><small>Shift date</small>{shiftDate}</span>{!specializedView && <><Button variant="outline" onClick={() => setPolicyOpen(true)} className="policy-button" disabled={busy || !backendOnline}><Settings2/> Policy</Button><Button onClick={runPhase === "review" ? () => setReviewOpen(true) : () => void simulate()} className="simulate" disabled={busy || !backendOnline}><Sparkles/> {busy ? "Recovery running" : runPhase === "review" ? "Review plan" : "Run disruption"}</Button></>}</div></header>

@@ -68,13 +68,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
 .territory-code small { margin-top: 3px; color: #63727b; font: .69rem/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .sidebar nav { min-height: 0; overflow-y: auto; padding-bottom: 8px; }
 .sidebar nav p { margin: 0 0 10px; padding: 0 7px; color: #87949c; font: 700 .7rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; }
-.sidebar nav button { height: 42px; margin: 2px 0; padding: 0 9px; border: 1px solid transparent; border-radius: 2px; gap: 9px; color: #89969e; font-size: .86rem; }
-.sidebar nav button .nav-index { width: 20px; color: #87949c; font: 600 .65rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.sidebar nav button svg { width: 17px; height: 17px; stroke-width: 1.7; }
-.sidebar nav button:hover { background: #10181e; border-color: #202b32; color: #d7dfe3; }
-.sidebar nav button.active { color: #f4fffc; background: linear-gradient(90deg, rgba(86,229,194,.16), rgba(86,229,194,.025)); border-color: #295046; box-shadow: inset 2px 0 var(--signal); }
-.sidebar nav button.active .nav-index { color: var(--signal); }
-.sidebar nav button small, .sidebar nav button.active small { margin-left: auto; padding: 2px 6px; border: 1px solid #334048; border-radius: 2px; background: transparent; color: #829099; font: 700 .65rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.workspace-nav-link { height: 42px; margin: 2px 0; padding: 0 9px; border: 1px solid transparent; border-radius: 2px; gap: 9px; background: transparent; color: #89969e; font-size: .86rem; text-decoration: none; transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease; }
+.workspace-nav-link .nav-index { width: 20px; color: #87949c; font: 600 .65rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.workspace-nav-link svg { width: 17px; height: 17px; stroke-width: 1.7; }
+.workspace-nav-link:hover { background: #10181e; border-color: #202b32; color: #d7dfe3; }
+.workspace-nav-link.active { color: #f4fffc; background: linear-gradient(90deg, rgba(86,229,194,.16), rgba(86,229,194,.025)); border-color: #295046; box-shadow: inset 2px 0 var(--signal); }
+.workspace-nav-link.active .nav-index { color: var(--signal); }
+.workspace-nav-link small, .workspace-nav-link.active small { margin-left: auto; padding: 2px 6px; border: 1px solid #334048; border-radius: 2px; background: transparent; color: #829099; font: 700 .65rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .system-card { margin-top: auto; padding: 13px 14px; border: 1px solid #243138; border-radius: 2px; background: #0d151a; }
 .system-card.online { border-color: #285346; background: linear-gradient(120deg, rgba(86,229,194,.07), transparent 70%); }
 .system-card > div { margin-bottom: 8px; color: var(--signal); font: 700 .7rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; letter-spacing: .09em; }
@@ -1338,15 +1338,15 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
 .service-command-shell .brand { color: #173039; }
 .service-command-shell .brand-mark { border-color: #85b8ae; background: #e1f3ef; color: #087a69; box-shadow: inset 0 0 0 3px rgba(255,255,255,.6); }
 .service-command-shell .brand-name > span, .service-command-shell .brand-index, .service-command-shell .territory-code span { color: #087a69; }
-.service-command-shell .brand-name small, .service-command-shell .territory-code small, .service-command-shell .sidebar nav p, .service-command-shell .sidebar nav button .nav-index { color: #647b82; }
+.service-command-shell .brand-name small, .service-command-shell .territory-code small, .service-command-shell .sidebar nav p, .service-command-shell .workspace-nav-link .nav-index { color: #647b82; }
 .service-command-shell .brand-index { border-color: #91b9b1; }
 .service-command-shell .territory-code { border-color: #bfd1d5; border-left-color: #188474; background: rgba(255,255,255,.55); }
 .service-command-shell .territory-code strong { color: #263f47; }
-.service-command-shell .sidebar nav button { color: #496169; }
-.service-command-shell .sidebar nav button:hover { border-color: #b7cbcf; background: rgba(255,255,255,.7); color: #142d35; }
-.service-command-shell .sidebar nav button.active { border-color: #78b2a7; background: linear-gradient(90deg, rgba(19,139,119,.14), rgba(255,255,255,.35)); color: #0c5f53; box-shadow: inset 3px 0 #087a69; }
-.service-command-shell .sidebar nav button.active .nav-index { color: #087a69; }
-.service-command-shell .sidebar nav button small, .service-command-shell .sidebar nav button.active small { border-color: #a9bdc1; color: #506970; }
+.service-command-shell .workspace-nav-link { background: transparent; color: #3f5b63; }
+.service-command-shell .workspace-nav-link:hover { border-color: #b7cbcf; background: rgba(255,255,255,.76); color: #142d35; }
+.service-command-shell .workspace-nav-link.active { border-color: #78b2a7; background: linear-gradient(90deg, rgba(19,139,119,.14), rgba(255,255,255,.55)); color: #0c5f53; box-shadow: inset 3px 0 #087a69; }
+.service-command-shell .workspace-nav-link.active .nav-index { color: #087a69; }
+.service-command-shell .workspace-nav-link small, .service-command-shell .workspace-nav-link.active small { border-color: #a9bdc1; color: #506970; }
 .service-command-shell .system-card { border-color: #b9ccd0; background: rgba(255,255,255,.6); }
 .service-command-shell .system-card.online { border-color: #78ad9f; background: linear-gradient(120deg, rgba(36,158,135,.12), rgba(255,255,255,.54)); }
 .service-command-shell .system-card > div { color: #087a69; }

@@ -48,6 +48,18 @@ describe("remediation contracts", () => {
     expect(workspaceRoutes.find(route => route.slug === "performance")?.dataProvenance).toBe("HYBRID VIEW");
   });
 
+  it("renders workspace destinations as links with explicit light-theme navigation surfaces", async () => {
+    const [shell, theme] = await Promise.all([
+      readFile(projectFile("app/control-room/_components/control-room-shell.tsx"), "utf8"),
+      readFile(projectFile("app/control-room.css"), "utf8"),
+    ]);
+
+    expect(shell).toContain('className={`workspace-nav-link');
+    expect(shell).toContain('href={`/control-room/${slug}`}');
+    expect(theme).toContain(".service-command-shell .workspace-nav-link { background: transparent;");
+    expect(theme).toContain(".service-command-shell .workspace-nav-link.active");
+  });
+
   it("protects spreadsheet consumers from formula execution", () => {
     expect(csvCell("=HYPERLINK(\"https://example.test\")")).toBe("\"'=HYPERLINK(\"\"https://example.test\"\")\"");
     expect(csvCell(" +SUM(A1:A2)")).toBe("' +SUM(A1:A2)");
