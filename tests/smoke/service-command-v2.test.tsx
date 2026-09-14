@@ -4,10 +4,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ServiceCommandV2 } from "@/components/service-command-v2";
 
+type TestPlanStatus = "AWAITING_APPROVAL" | "APPROVED" | "EXECUTED" | "REJECTED";
+
 const recoveryPlan = {
   id: "plan-test",
   disruptionId: "disruption-test",
-  status: "AWAITING_APPROVAL" as const,
+  status: "AWAITING_APPROVAL" as TestPlanStatus,
   version: 1,
   policyVersion: 1,
   optimizerVersion: "optimizer-test",
@@ -93,8 +95,8 @@ describe("service command recovery workflow", () => {
       if (url === "/api/recovery-plans/transition") {
         const body = JSON.parse(String(init?.body ?? "{}")) as { action?: string };
         if (!persistedPlan) throw new Error("Expected a persisted recovery plan");
-        const nextStatus = body.action === "approve" ? "APPROVED" : body.action === "execute" ? "EXECUTED" : "REJECTED";
-        persistedPlan = { ...persistedPlan, status: nextStatus, version: persistedPlan.version + 1 } as typeof recoveryPlan;
+        const nextStatus: TestPlanStatus = body.action === "approve" ? "APPROVED" : body.action === "execute" ? "EXECUTED" : "REJECTED";
+        persistedPlan = { ...persistedPlan, status: nextStatus, version: persistedPlan.version + 1 };
         return jsonResponse({ plan: persistedPlan });
       }
 
