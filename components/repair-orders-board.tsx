@@ -22,7 +22,7 @@ export function RepairOrdersBoard() {
 
   return <div className="repair-orders-view">
     <section className="repair-orders-intro">
-      <div><span className="eyebrow">CUSTOMER PROMISE CONTROL / LIVE QUEUE</span><h2>See which repair orders will make their promise</h2><p>Select an order to trace its shop progress, constraint state, and next action.</p></div>
+      <div><span className="eyebrow">CUSTOMER PROMISE CONTROL / REFERENCE QUEUE</span><h2>See which repair orders will make their promise</h2><p>Select an illustrative order to trace its shop progress, constraint state, and next action.</p></div>
       <div className="promise-score"><span><i/> Promise health</span><strong>93.6%</strong><small>5 of 7 protected</small></div>
     </section>
 

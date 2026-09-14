@@ -244,7 +244,7 @@ export async function createDisruption(operator: Operator, input: { technicianId
   const timestamp = now();
 
   if (!existing) {
-    await database.prepare("INSERT OR IGNORE INTO disruptions (id, type, technician_id, status, idempotency_key, created_by, created_at) VALUES (?, 'TECHNICIAN_UNAVAILABLE', ?, 'EVALUATED', ?, ?, ?)").bind(disruptionId, technicianId, idempotencyKey, operator.id, timestamp).run();
+    await database.prepare("INSERT OR IGNORE INTO disruptions (id, type, technician_id, previous_technician_status, status, idempotency_key, created_by, created_at) VALUES (?, 'TECHNICIAN_UNAVAILABLE', ?, ?, 'EVALUATED', ?, ?, ?)").bind(disruptionId, technicianId, technician.status, idempotencyKey, operator.id, timestamp).run();
     const canonical = await database.prepare("SELECT id FROM disruptions WHERE idempotency_key = ? AND created_by = ?").bind(idempotencyKey, operator.id).first<{ id: string }>();
     if (!canonical) throw new OperationError(500, "Disruption could not be recorded", "DISRUPTION_WRITE_FAILED");
     if (canonical.id !== disruptionId) {
@@ -343,11 +343,18 @@ async function rollbackPlan(operator: Operator, plan: PlanRow) {
   const rollingBack = await compareAndSetPlan(operator, plan, "ROLLING_BACK");
   const database = db();
   try {
-    const result = await database.prepare("SELECT work_order_id, from_technician_id FROM plan_assignments WHERE plan_id = ?").bind(plan.id).all();
+    const [result, disruption] = await Promise.all([
+      database.prepare("SELECT work_order_id, from_technician_id FROM plan_assignments WHERE plan_id = ?").bind(plan.id).all(),
+      database.prepare("SELECT technician_id, previous_technician_status FROM disruptions WHERE id = ? AND created_by = ?").bind(plan.disruption_id, operator.id).first<{ technician_id: string; previous_technician_status: string }>(),
+    ]);
+    if (!disruption) throw new Error("Disruption state is unavailable");
     const timestamp = now();
-    await database.batch(result.results.map(row => database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'SCHEDULED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ?").bind(row.from_technician_id, timestamp, row.work_order_id, scopedId(operator, "T-274"))));
+    await database.batch([
+      ...result.results.map(row => database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'SCHEDULED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ?").bind(row.from_technician_id, timestamp, row.work_order_id, disruption.technician_id)),
+      database.prepare("UPDATE technicians SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND territory = ? AND status = 'UNAVAILABLE'").bind(disruption.previous_technician_status, timestamp, disruption.technician_id, operator.workspace_id),
+    ]);
     const rolledBack = await compareAndSetPlan(operator, rollingBack, "ROLLED_BACK");
-    await database.batch([auditStatement(database, `${plan.id}:audit:${rolledBack.version}:rollback`, "recovery_plan", plan.id, "PLAN_ROLLED_BACK", "EXECUTED", "ROLLED_BACK", operator, { assignmentsRestored: result.results.length })]);
+    await database.batch([auditStatement(database, `${plan.id}:audit:${rolledBack.version}:rollback`, "recovery_plan", plan.id, "PLAN_ROLLED_BACK", "EXECUTED", "ROLLED_BACK", operator, { assignmentsRestored: result.results.length, technicianStatusRestored: disruption.previous_technician_status })]);
     return serializePlan(operator, rolledBack);
   } catch (error) {
     const failed = await compareAndSetPlan(operator, rollingBack, "ROLLBACK_FAILED");

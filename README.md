@@ -23,7 +23,7 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 - Durable PostgreSQL state for technicians, work orders, policies, disruptions, plans, assignments, and audits
 - Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
 - Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
-- Immutable decision stream backed by operational audit records
+- Immutable decision stream backed by PostgreSQL triggers that reject audit updates and deletes
 - AgentOps control tower for fleet health, cost, latency, escalation, and incident monitoring
 - Versioned agent release pipeline with evaluation, shadow, production, and rollback stages
 - Five enforced release gates covering task success, policy compliance, hallucinations, tool accuracy, and latency
@@ -62,6 +62,8 @@ FieldOps AI demonstrates how a bounded decision system can evaluate those tradeo
 15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
 16. Select **Simulation Lab** to focus a dealership workload profile, inspect the visual constraint screen, and verify the latest release-readiness gates.
 17. Run a new benchmark suite, compare it with the previous baseline, and export the persisted CSV evidence report.
+
+Workspace provenance is explicit in the interface: Service Command and Technicians use live persisted state, Shop Board and Repair Orders are illustrative reference views, Performance combines a live recovery projection with illustrative trends, and the remaining workspaces identify modeled, measured, reference, or demo data at the point of use.
 
 ## Optimization model
 
@@ -128,8 +130,12 @@ flowchart TD
 ```text
 app/
   control-room/[workspace] Addressable operational workspace routes
+  control-room/layout.tsx  Route-scoped operational CSS bundle
   control-room/_components Shared service command shell and workflows
-  globals.css              Application theme and responsive layout
+  globals.css              Minimal document reset shared by all routes
+  control-room-structure.css Structural layout primitives for operational views
+  control-room.css         Dark operational workspace design system
+  landing.module.css       Scoped public landing-page presentation
 components/ui/             Accessible interface primitives
 lib/
   dispatch-optimizer.ts    Constraints, search, scoring, and plan output
@@ -163,7 +169,7 @@ tests/                     Domain, benchmark, route, accessibility, and UI smoke
 
 The current version is a portfolio prototype using synthetic operational data. The optimization and benchmark logic is real and deterministic and executes on the server. The browser also computes a non-authoritative policy preview before saving. Public visitors receive separate cookie-backed demo workspaces, so their mutations, policies, plans, diagnostics, capacity scenarios, benchmarks, and agent evaluations do not share operational state.
 
-The implementation demonstrates production-oriented controls, but it is not connected to a live dealer management system. External DMS, technician timekeeping, parts-catalog, OEM-service-information, and customer-messaging integrations remain simulated boundaries. Execution updates durable repair-order state, while rollback is implemented as an explicit compensating transaction with its own audit event.
+The implementation demonstrates production-oriented controls, but it is not connected to a live dealer management system. External DMS, technician timekeeping, parts-catalog, OEM-service-information, and customer-messaging integrations remain simulated boundaries. Execution updates durable repair-order state, while rollback restores both repair-order assignments and the disrupted technician's prior status through an explicit compensating transaction with its own audit event.
 
 ## Roadmap
 

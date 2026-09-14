@@ -60,7 +60,7 @@ export function PerformanceCommandCenter({ projectedSla, incident }: { projected
       </div>
 
       <aside className="recovery-outcome-card">
-        <header><span>DISRUPTION OUTCOME / LIVE</span><strong><i/> Controlled</strong></header>
+        <header><span>DISRUPTION OUTCOME / ACTIVE SCENARIO</span><strong><i/> Controlled</strong></header>
         <div className="outcome-event"><Activity/><div><small>Capacity loss</small><strong>7 promises exposed</strong></div></div>
         <div className="outcome-flow" aria-label="Recovery impact"><div className="exposed"><span>EXPOSED</span><strong>7</strong></div><ArrowRight/><div className="protected"><span>PROTECTED</span><strong>5</strong></div><ArrowRight/><div className="callbacks"><span>CALLBACKS</span><strong>2</strong></div></div>
         <div className="outcome-bars"><div><span>Before recovery</span><b><i style={{ width: "100%" }}/></b><strong>7 at risk</strong></div><div><span>After recovery</span><b><i style={{ width: "29%" }}/></b><strong>2 at risk</strong></div></div>
@@ -69,7 +69,7 @@ export function PerformanceCommandCenter({ projectedSla, incident }: { projected
     </section>
 
     <section className="performance-drivers">
-      <header><div><span>OUTCOME DRIVERS</span><strong>What is shaping today&apos;s result</strong></div><small>Live operating inputs</small></header>
+      <header><div><span>OUTCOME DRIVERS</span><strong>What is shaping today&apos;s result</strong></div><small>Illustrative trend inputs</small></header>
       <div>{drivers.map(driver => <article key={driver.label}><div><span>{driver.label}</span><strong>{driver.value}%</strong></div><b><i style={{ width: `${driver.value}%` }}/></b><small>{driver.note}</small></article>)}</div>
       <footer><TrendingUp/><span><strong>Recovery effectiveness is holding above target</strong><small>Promise protection remains the strongest contributor to today&apos;s operating score.</small></span></footer>
     </section>

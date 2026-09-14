@@ -13,8 +13,8 @@ export function ShopBoard() {
 
   return <div className="shop-board-view">
     <section className="shop-board-intro">
-      <div><span className="eyebrow">LIVE SHOP FLOOR / 12-BAY CONTROL</span><h2>Every bay, repair order, and customer promise in one view</h2><p>Select a bay to inspect its current work state and promised-time risk.</p></div>
-      <div className="shop-board-pulse"><i/><span>Shop signal live</span><strong>Updated now</strong></div>
+      <div><span className="eyebrow">REFERENCE SHOP FLOOR / 12-BAY CONTROL</span><h2>Every bay, repair order, and customer promise in one view</h2><p>Select a bay to inspect the reference work state and promised-time risk.</p></div>
+      <div className="shop-board-pulse"><i/><span>Illustrative layout</span><strong>Reference state</strong></div>
     </section>
 
     <section className="shop-board-metrics" aria-label="Shop board status">

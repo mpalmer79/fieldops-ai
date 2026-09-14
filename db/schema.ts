@@ -55,6 +55,7 @@ export const disruptions = sqliteTable("disruptions", {
   id: text("id").primaryKey(),
   type: text("type").notNull(),
   technicianId: text("technician_id").notNull(),
+  previousTechnicianStatus: text("previous_technician_status").notNull().default("IN_BAY"),
   status: text("status").notNull(),
   idempotencyKey: text("idempotency_key").notNull(),
   createdBy: text("created_by").notNull(),

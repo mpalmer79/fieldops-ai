@@ -1,12 +1,16 @@
 .page {
-  --landing-bg: #070b0f;
-  --landing-panel: #0c1317;
+  --landing-bg: #101b22;
+  --landing-panel: #111f26;
   --landing-line: #26343a;
   --landing-signal: #56e5c2;
   --landing-amber: #ffb95e;
   min-height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at 74% 2%, rgba(86, 229, 194, .085), transparent 32rem), var(--landing-bg);
+  background:
+    radial-gradient(circle at 84% 5%, rgba(53, 177, 157, .22), transparent 34rem),
+    radial-gradient(circle at 8% 38%, rgba(55, 93, 145, .2), transparent 42rem),
+    radial-gradient(circle at 78% 76%, rgba(38, 111, 124, .16), transparent 38rem),
+    linear-gradient(145deg, #101b22 0%, #0d1920 32%, #13262c 66%, #172338 100%);
   color: #e9eff1;
 }
 
@@ -55,7 +59,6 @@
   position: relative;
   display: grid;
   width: min(1400px, calc(100% - 56px));
-  min-height: calc(100vh - 82px);
   grid-template-columns: minmax(440px, .86fr) minmax(520px, 1.14fr);
   align-items: center;
   gap: clamp(36px, 5vw, 82px);

@@ -91,6 +91,10 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
 .topbar h1 { color: #f0f4f6; font-size: 1.18rem; letter-spacing: -.01em; line-height: 1.15; }
 .topbar p { margin-top: 4px; color: #77858e; font-size: .81rem; }
 .topbar-actions { gap: 10px; }
+.data-provenance { display: inline-flex; min-height: 30px; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid #3b454b; background: #11171b; color: #9ca8ae; font: 700 .59rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; white-space: nowrap; }
+.data-provenance i { width: 6px; height: 6px; border-radius: 50%; background: #829099; }
+.data-provenance.live { border-color: #285b4d; background: #10251f; color: #82e9ce; }
+.data-provenance.live i { background: var(--signal); box-shadow: 0 0 8px rgba(86,229,194,.55); }
 .operating { min-height: 44px; padding: 0 11px; gap: 9px; border: 1px solid #263239; background: #0d1419; color: #d1dade; border-radius: 2px; font-size: .78rem; }
 .operating > span { display: flex; flex-direction: column; line-height: 1.2; }
 .operating small, .date small { color: #87949c; font: 600 .62rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
@@ -995,6 +999,7 @@ tbody tr:hover { background: rgba(86,229,194,.035); }
 }
 
 @media (max-width: 620px) {
+  .data-provenance { display: none; }
   .topbar .policy-button { width: 42px; padding: 0 !important; font-size: 0 !important; }
   .topbar .policy-button svg { width: 17px; }
   .topbar .simulate { padding-inline: 11px !important; font-size: .72rem !important; }

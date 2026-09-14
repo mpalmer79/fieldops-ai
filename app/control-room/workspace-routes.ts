@@ -1,13 +1,13 @@
 export const workspaceRoutes = [
-  { slug: "service-command", label: "Service command", title: "Service command", description: "Rooftop 01 · live service operation", operatingMode: "Live operation" },
-  { slug: "shop-board", label: "Shop board", title: "Shop board", description: "Live bay occupancy, work state, and customer promise risk", operatingMode: "Floor control" },
-  { slug: "repair-orders", label: "Repair orders", title: "Repair orders", description: "Customer promise risk, repair progression, and recovery status", operatingMode: "Promise control" },
-  { slug: "technicians", label: "Technicians", title: "Technicians", description: "Workload, certification coverage, and qualified capacity", operatingMode: "Team control" },
-  { slug: "performance", label: "Performance", title: "Performance", description: "Customer promises, shop output, and recovery impact", operatingMode: "Outcome control" },
-  { slug: "capacity-planning", label: "Capacity Planning", title: "Capacity planning", description: "Appointment forecasts, staffing risk, and scenario decisions", operatingMode: "Planning horizon" },
-  { slug: "simulation-lab", label: "Simulation Lab", title: "Simulation lab", description: "Dealership recovery stress tests and release readiness", operatingMode: "Measured runtime" },
-  { slug: "diagnostic-copilot", label: "Diagnostic Copilot", title: "Vehicle diagnostics", description: "Evidence, safety, parts, and repair outcomes", operatingMode: "Grounded support" },
-  { slug: "agentops", label: "AgentOps", title: "AI operations", description: "Agent fleet governance and release safety", operatingMode: "Monitored fleet" },
+  { slug: "service-command", label: "Service command", title: "Service command", description: "Rooftop 01 · live service operation", operatingMode: "Live operation", dataProvenance: "LIVE DATA" },
+  { slug: "shop-board", label: "Shop board", title: "Shop board", description: "Illustrative bay occupancy, work state, and customer promise risk", operatingMode: "Floor control", dataProvenance: "REFERENCE VIEW" },
+  { slug: "repair-orders", label: "Repair orders", title: "Repair orders", description: "Illustrative customer promise risk, repair progression, and recovery status", operatingMode: "Promise control", dataProvenance: "REFERENCE VIEW" },
+  { slug: "technicians", label: "Technicians", title: "Technicians", description: "Live workload, certification coverage, and qualified capacity", operatingMode: "Team control", dataProvenance: "LIVE DATA" },
+  { slug: "performance", label: "Performance", title: "Performance", description: "Live recovery projection with illustrative seven-day trends", operatingMode: "Outcome control", dataProvenance: "HYBRID VIEW" },
+  { slug: "capacity-planning", label: "Capacity Planning", title: "Capacity planning", description: "Versioned synthetic forecasts, staffing risk, and scenario decisions", operatingMode: "Planning horizon", dataProvenance: "MODELED DATA" },
+  { slug: "simulation-lab", label: "Simulation Lab", title: "Simulation lab", description: "Measured dealership recovery stress tests and release readiness", operatingMode: "Measured runtime", dataProvenance: "MEASURED DATA" },
+  { slug: "diagnostic-copilot", label: "Diagnostic Copilot", title: "Vehicle diagnostics", description: "Persisted workflow using curated reference evidence", operatingMode: "Grounded support", dataProvenance: "REFERENCE DATA" },
+  { slug: "agentops", label: "AgentOps", title: "AI operations", description: "Persisted demo governance and release-safety state", operatingMode: "Monitored fleet", dataProvenance: "DEMO DATA" },
 ] as const;
 
 export type WorkspaceRoute = (typeof workspaceRoutes)[number];

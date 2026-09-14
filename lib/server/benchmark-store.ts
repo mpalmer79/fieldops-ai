@@ -565,8 +565,9 @@ export async function runBenchmarkSuite(operator: Operator, input: { idempotency
   return snapshotForRun(operator, run);
 }
 
-function csvCell(value: string | number | boolean) {
-  const text = String(value);
+export function csvCell(value: string | number | boolean) {
+  const raw = String(value);
+  const text = typeof value === "string" && /^[\t\r ]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
