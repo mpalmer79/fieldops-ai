@@ -3,9 +3,11 @@ import { assistantPrompts, resolveAssistantResponse, welcomeReply } from "@/lib/
 
 describe("FieldOps context assistant", () => {
   it("positions itself as a deterministic local knowledge assistant", () => {
+    const welcomeText = welcomeReply.paragraphs.join(" ").toLowerCase();
+
     expect(welcomeReply.title).toBe("FieldOps Context Assistant");
-    expect(welcomeReply.paragraphs.join(" ")).toContain("deterministic in-app knowledge assistant");
-    expect(welcomeReply.paragraphs.join(" ")).toContain("does not send your question to Claude, OpenAI, or another external model");
+    expect(welcomeText).toContain("deterministic in-app knowledge assistant");
+    expect(welcomeText).toContain("do not send your question to claude, openai, or another external model");
   });
 
   it("provides exactly four starter questions including the creator prompt", () => {
