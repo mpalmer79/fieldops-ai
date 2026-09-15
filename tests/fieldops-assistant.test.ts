@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { assistantPrompts, resolveAssistantResponse } from "@/lib/fieldops-assistant";
+import { assistantPrompts, resolveAssistantResponse, welcomeReply } from "@/lib/fieldops-assistant";
 
-describe("FieldOps local assistant", () => {
+describe("FieldOps context assistant", () => {
+  it("positions itself as a deterministic local knowledge assistant", () => {
+    expect(welcomeReply.title).toBe("FieldOps Context Assistant");
+    expect(welcomeReply.paragraphs.join(" ")).toContain("deterministic in-app knowledge assistant");
+    expect(welcomeReply.paragraphs.join(" ")).toContain("does not send your question to Claude, OpenAI, or another external model");
+  });
+
   it("provides exactly four starter questions including the creator prompt", () => {
     expect(assistantPrompts).toHaveLength(4);
     expect(assistantPrompts.some((prompt) => prompt.includes("Michael Palmer"))).toBe(true);
@@ -38,6 +44,6 @@ describe("FieldOps local assistant", () => {
     const response = resolveAssistantResponse("Tell me something unrelated to the project");
 
     expect(response.intent).toBe("fallback");
-    expect(response.paragraphs.join(" ")).toContain("No prompt is sent to Claude");
+    expect(response.paragraphs.join(" ")).toContain("No prompt is sent to Claude, OpenAI, or another external model");
   });
 });
