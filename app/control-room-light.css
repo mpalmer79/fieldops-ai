@@ -1,0 +1,1197 @@
+/* Light workspace migration for the live Railway control room.
+   Service Command already owns its current light treatment, so these rules
+   intentionally target only the remaining specialized workspaces. */
+
+.app-shell:not(.service-command-shell) {
+  --background: #f7f9fc;
+  --foreground: #172033;
+  --primary: #316bd0;
+  --primary-foreground: #fff;
+  --secondary: #eef3fb;
+  --secondary-foreground: #26344b;
+  --muted: #f1f5f9;
+  --muted-foreground: #718096;
+  --accent: #eaf5f1;
+  --accent-foreground: #227b64;
+  --destructive: #c4524b;
+  --border: #dce4ee;
+  --input: #d9e2ec;
+  --ring: #3971c8;
+  --card: #fff;
+  --card-foreground: #172033;
+  --popover: #fff;
+  --popover-foreground: #172033;
+  --signal: #278b72;
+  --signal-dim: #76b9a7;
+  --amber: #c78a35;
+  --ink-0: #f7f9fc;
+  --ink-1: #fff;
+  --ink-2: #f3f7fb;
+  --line: #dce4ee;
+  --text-1: #1f2d42;
+  --text-2: #66758a;
+  --text-3: #8795a7;
+  min-height: 100vh;
+  color: #172033;
+  background:
+    radial-gradient(circle at 82% 0%, rgba(54, 211, 153, .11), transparent 30rem),
+    radial-gradient(circle at 32% 18%, rgba(77, 116, 255, .11), transparent 34rem),
+    linear-gradient(135deg, #f8fafc 0%, #eef3fb 52%, #f7fbf9 100%);
+}
+
+/* Shared shell */
+.app-shell:not(.service-command-shell) .sidebar {
+  width: 268px;
+  padding: 24px 18px 18px;
+  border-right: 1px solid rgba(100, 116, 139, .20);
+  background: rgba(255, 255, 255, .90);
+  box-shadow: 12px 0 36px rgba(15, 23, 42, .045);
+  color: #637085;
+  backdrop-filter: blur(24px);
+}
+
+.app-shell:not(.service-command-shell) .sidebar::after {
+  height: 2px;
+  background: linear-gradient(90deg, #3971c8 0 31%, #42aa93 31% 52%, transparent 52% 100%);
+  opacity: .72;
+}
+
+.app-shell:not(.service-command-shell) .brand {
+  color: #172033;
+}
+
+.app-shell:not(.service-command-shell) .brand-mark {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(40, 102, 218, .18);
+  border-radius: 12px;
+  color: #2463d4;
+  background: linear-gradient(145deg, #eef5ff, #fff);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.8), 0 8px 18px rgba(55,92,170,.08);
+}
+
+.app-shell:not(.service-command-shell) .brand-name {
+  color: #172033;
+  font-size: .92rem;
+}
+
+.app-shell:not(.service-command-shell) .brand-name > span {
+  color: #278b72;
+}
+
+.app-shell:not(.service-command-shell) .brand-name small {
+  color: #7b8798;
+}
+
+.app-shell:not(.service-command-shell) .brand-index {
+  border: 1px solid #d7e2ed;
+  border-radius: 7px;
+  color: #3971c8;
+  background: #f7faff;
+}
+
+.app-shell:not(.service-command-shell) .territory-code {
+  margin-bottom: 22px;
+  padding: 14px;
+  border: 1px solid #dbe4f0;
+  border-left-width: 1px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(239,246,255,.95), rgba(245,250,248,.95));
+}
+
+.app-shell:not(.service-command-shell) .territory-code span {
+  color: #3971c8;
+}
+
+.app-shell:not(.service-command-shell) .territory-code strong {
+  color: #26344b;
+}
+
+.app-shell:not(.service-command-shell) .territory-code small {
+  color: #7b8798;
+}
+
+.app-shell:not(.service-command-shell) .sidebar nav p {
+  color: #94a0b1;
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link {
+  height: 44px;
+  margin: 3px 0;
+  padding: 0 10px;
+  border-radius: 11px;
+  color: #637085;
+  font-size: .82rem;
+  font-weight: 650;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link .nav-index {
+  color: #a4afbd;
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link:hover {
+  border-color: #dfe7f1;
+  color: #25354e;
+  background: rgba(248,250,252,.94);
+  transform: translateX(2px);
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link.active {
+  border-color: rgba(44,103,214,.16);
+  color: #204f9f;
+  background: linear-gradient(90deg, rgba(219,233,255,.95), rgba(238,247,246,.93));
+  box-shadow: inset 3px 0 #3b74d8;
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link.active .nav-index {
+  color: #3971c8;
+}
+
+.app-shell:not(.service-command-shell) .workspace-nav-link small,
+.app-shell:not(.service-command-shell) .workspace-nav-link.active small {
+  border-color: #d6e0ea;
+  border-radius: 999px;
+  color: #728096;
+  background: #f7f9fc;
+}
+
+.app-shell:not(.service-command-shell) .system-card {
+  border: 1px solid #d9e5df;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f6fcf9, #fff);
+}
+
+.app-shell:not(.service-command-shell) .system-card.online {
+  border-color: #cce4da;
+  background: linear-gradient(145deg, #f4fbf7, #fff);
+}
+
+.app-shell:not(.service-command-shell) .system-card > div {
+  color: #218b67;
+}
+
+.app-shell:not(.service-command-shell) .system-card strong {
+  color: #304055;
+}
+
+.app-shell:not(.service-command-shell) .system-card p {
+  color: #81909f;
+}
+
+.app-shell:not(.service-command-shell) .profile {
+  border-color: #e0e7ef;
+}
+
+.app-shell:not(.service-command-shell) .profile > span {
+  border: 1px solid #d7e2ed;
+  border-radius: 11px;
+  color: #3971c8;
+  background: #f2f7ff;
+}
+
+.app-shell:not(.service-command-shell) .profile strong {
+  color: #36465c;
+}
+
+.app-shell:not(.service-command-shell) .profile small {
+  color: #8795a7;
+}
+
+.app-shell:not(.service-command-shell) .workspace {
+  width: calc(100% - 268px);
+  margin-left: 268px;
+  background: transparent;
+}
+
+.app-shell:not(.service-command-shell) .topbar {
+  min-height: 96px;
+  height: auto;
+  padding: 17px 30px;
+  border-bottom: 1px solid rgba(148, 163, 184, .20);
+  background: rgba(250, 252, 255, .88);
+  backdrop-filter: blur(22px);
+}
+
+.app-shell:not(.service-command-shell) .workspace-title > span {
+  color: #3971c8;
+  font-size: .67rem;
+  font-weight: 800;
+}
+
+.app-shell:not(.service-command-shell) .topbar h1 {
+  margin-top: 4px;
+  color: #172033;
+  font-size: 1.42rem;
+  font-weight: 760;
+  letter-spacing: -.035em;
+}
+
+.app-shell:not(.service-command-shell) .topbar p {
+  color: #718096;
+}
+
+.app-shell:not(.service-command-shell) .data-provenance {
+  border: 1px solid #dce4ec;
+  border-radius: 999px;
+  color: #68778a;
+  background: rgba(255,255,255,.82);
+}
+
+.app-shell:not(.service-command-shell) .data-provenance i {
+  background: #98a5b4;
+}
+
+.app-shell:not(.service-command-shell) .data-provenance.live {
+  border-color: #cde7dc;
+  color: #218b67;
+  background: #f4fbf7;
+}
+
+.app-shell:not(.service-command-shell) .data-provenance.live i {
+  background: #218b67;
+  box-shadow: 0 0 0 4px rgba(33,139,103,.10);
+}
+
+.app-shell:not(.service-command-shell) .operating {
+  border: 1px solid #dce4ec;
+  border-radius: 999px;
+  color: #5f6b7b;
+  background: rgba(255,255,255,.84);
+}
+
+.app-shell:not(.service-command-shell) .operating small,
+.app-shell:not(.service-command-shell) .date small {
+  color: #99a5b4;
+}
+
+.app-shell:not(.service-command-shell) .operating svg:first-child {
+  color: #218b67;
+  fill: #218b67;
+  filter: none;
+}
+
+.app-shell:not(.service-command-shell) .operating svg:last-child {
+  color: #93a0af;
+}
+
+.app-shell:not(.service-command-shell) .date {
+  border-color: #dfe6ef;
+  color: #536176;
+}
+
+.app-shell:not(.service-command-shell) .content {
+  width: min(100%, 1680px);
+  max-width: none;
+  padding: 26px 30px 46px;
+  overflow-x: hidden;
+}
+
+/* Shared content language */
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-view,
+  .repair-orders-view,
+  .technician-command-view,
+  .performance-command-view,
+  .agentops,
+  .capacity-planning,
+  .simulation-lab,
+  .diagnostic-copilot
+) {
+  color: #5f6f83;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-view,
+  .repair-orders-view,
+  .technician-command-view,
+  .performance-command-view,
+  .agentops,
+  .capacity-planning,
+  .simulation-lab,
+  .diagnostic-copilot
+) :is(h2,h3,h4) {
+  color: #1f2d42;
+}
+
+.app-shell:not(.service-command-shell) .eyebrow,
+.app-shell:not(.service-command-shell) :is(
+  .floor-plan-heading,
+  .promise-rail > header,
+  .technician-load-board > header,
+  .certification-matrix > header,
+  .performance-trend-card > header,
+  .performance-drivers > header,
+  .simulation-profile-panel > header,
+  .simulation-pressure-card > header,
+  .simulation-gates-card > header
+) > div > span {
+  color: #2d7d72;
+}
+
+/* Workspace hero surfaces */
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-intro,
+  .repair-orders-intro,
+  .technician-command-intro,
+  .performance-command-intro,
+  .agentops-intro,
+  .capacity-intro,
+  .diagnostic-intro,
+  .simulation-lab-hero
+) {
+  min-height: 138px;
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.22);
+  border-radius: 18px;
+  background: linear-gradient(120deg, rgba(236,244,255,.96), rgba(250,253,252,.97));
+  box-shadow: 0 14px 36px rgba(47,64,93,.06);
+}
+
+.app-shell:not(.service-command-shell) .capacity-intro {
+  background: linear-gradient(120deg, rgba(255,248,236,.97), rgba(240,247,255,.97));
+}
+
+.app-shell:not(.service-command-shell) .diagnostic-intro {
+  background: linear-gradient(120deg, rgba(238,247,255,.97), rgba(246,251,249,.97));
+}
+
+.app-shell:not(.service-command-shell) .simulation-lab-hero {
+  background: linear-gradient(120deg, rgba(238,249,246,.97), rgba(239,246,255,.97));
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-intro,
+  .repair-orders-intro,
+  .technician-command-intro,
+  .performance-command-intro,
+  .agentops-intro,
+  .capacity-intro,
+  .diagnostic-intro,
+  .simulation-lab-hero
+) h2 {
+  color: #1f2d42;
+  letter-spacing: -.04em;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-intro,
+  .repair-orders-intro,
+  .technician-command-intro,
+  .performance-command-intro,
+  .agentops-intro,
+  .capacity-intro,
+  .diagnostic-intro,
+  .simulation-lab-hero
+) p {
+  color: #68778a;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-pulse,
+  .promise-score,
+  .coverage-visual,
+  .performance-score,
+  .environment,
+  .capacity-peak-visual,
+  .diagnostic-context,
+  .simulation-readiness
+) {
+  border-color: #d7e2ec;
+  border-radius: 14px;
+  color: #536176;
+  background: rgba(255,255,255,.78);
+  box-shadow: none;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-pulse,
+  .promise-score,
+  .coverage-visual,
+  .performance-score,
+  .environment,
+  .capacity-peak-visual,
+  .diagnostic-context,
+  .simulation-readiness
+) strong {
+  color: #26364d;
+}
+
+/* Metric strips */
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-metrics,
+  .repair-order-metrics,
+  .technician-command-metrics,
+  .performance-command-metrics,
+  .agentops-metrics,
+  .capacity-metrics,
+  .diagnostic-metrics,
+  .simulation-outcome-strip
+) {
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,.22);
+  border-radius: 18px;
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 14px 36px rgba(47,64,93,.055);
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-metrics,
+  .repair-order-metrics,
+  .technician-command-metrics,
+  .performance-command-metrics
+) > div,
+.app-shell:not(.service-command-shell) :is(.agent-metric,.capacity-metric,.diagnostic-metric),
+.app-shell:not(.service-command-shell) .simulation-outcome-strip > div {
+  border-color: #e4eaf1;
+  color: #657389;
+  background: transparent;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-metrics,
+  .repair-order-metrics,
+  .technician-command-metrics,
+  .performance-command-metrics
+) > div > svg,
+.app-shell:not(.service-command-shell) :is(.agent-metric,.capacity-metric,.diagnostic-metric) > span {
+  border-color: #cfe3dc;
+  border-radius: 11px;
+  color: #278b72;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-metrics,
+  .repair-order-metrics,
+  .technician-command-metrics,
+  .performance-command-metrics,
+  .agent-metric,
+  .capacity-metric,
+  .diagnostic-metric,
+  .simulation-outcome-strip
+) strong {
+  color: #233248;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .shop-board-metrics,
+  .repair-order-metrics,
+  .technician-command-metrics,
+  .performance-command-metrics,
+  .agent-metric,
+  .capacity-metric,
+  .diagnostic-metric,
+  .simulation-outcome-strip
+) :is(small,p,span) {
+  color: #8795a7;
+}
+
+/* General cards */
+.app-shell:not(.service-command-shell) :is(
+  .floor-plan,
+  .bay-inspector,
+  .promise-rail,
+  .promise-inspector,
+  .technician-load-board,
+  .technician-inspector,
+  .certification-matrix,
+  .performance-trend-card,
+  .recovery-outcome-card,
+  .performance-drivers,
+  .agent-fleet-card,
+  .agent-release-card,
+  .agent-detail-card,
+  .capacity-card,
+  .diagnostic-card,
+  .simulation-profile-panel,
+  .simulation-pressure-card,
+  .simulation-gates-card,
+  .simulation-evidence
+) {
+  border-color: #dce4ee;
+  border-radius: 16px;
+  color: #637085;
+  background: rgba(255,255,255,.91);
+  box-shadow: 0 14px 34px rgba(47,64,93,.055);
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .agent-fleet-card,
+  .agent-release-card,
+  .agent-detail-card,
+  .capacity-card,
+  .diagnostic-card
+)::after {
+  background: linear-gradient(90deg, #3971c8, #42aa93);
+  opacity: .42;
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .floor-plan-heading,
+  .bay-inspector > header,
+  .promise-rail > header,
+  .promise-inspector > header,
+  .technician-load-board > header,
+  .technician-inspector > header,
+  .certification-matrix > header,
+  .performance-trend-card > header,
+  .recovery-outcome-card > header,
+  .performance-drivers > header,
+  .agentops-card-heading,
+  .capacity-card-heading,
+  .diagnostic-card-heading,
+  .simulation-profile-panel > header,
+  .simulation-pressure-card > header,
+  .simulation-gates-card > header
+) {
+  border-color: #e2e8ef;
+  background: rgba(250,252,254,.70);
+}
+
+.app-shell:not(.service-command-shell) :is(
+  .floor-plan-heading,
+  .promise-rail > header,
+  .technician-load-board > header,
+  .certification-matrix > header,
+  .performance-trend-card > header,
+  .performance-drivers > header,
+  .agentops-card-heading,
+  .capacity-card-heading,
+  .diagnostic-card-heading,
+  .simulation-profile-panel > header,
+  .simulation-pressure-card > header,
+  .simulation-gates-card > header
+) :is(strong,h3),
+.app-shell:not(.service-command-shell) :is(.agentops-card-heading h3,.capacity-card-heading h3,.diagnostic-card-heading h3) {
+  color: #26364d;
+}
+
+/* Shop Board */
+.app-shell:not(.service-command-shell) .bay-plan-grid {
+  background:
+    linear-gradient(rgba(94,116,139,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94,116,139,.05) 1px, transparent 1px),
+    #f8fbfd;
+}
+
+.app-shell:not(.service-command-shell) .floor-bay {
+  border-color: #dbe4ec;
+  color: #59687b;
+  background: linear-gradient(145deg, #fff, #f7fafc);
+  box-shadow: 0 8px 18px rgba(55,72,99,.045);
+}
+
+.app-shell:not(.service-command-shell) .floor-bay:hover,
+.app-shell:not(.service-command-shell) .floor-bay.selected {
+  border-color: #9fc2e7;
+  background: linear-gradient(145deg, #eef6ff, #f5fbf8);
+  box-shadow: 0 10px 22px rgba(57,113,200,.10);
+}
+
+.app-shell:not(.service-command-shell) :is(.floor-bay strong,.floor-bay-head b,.inspector-vehicle h3,.inspector-facts dd) {
+  color: #2b3a50;
+}
+
+.app-shell:not(.service-command-shell) :is(.floor-bay small,.inspector-vehicle p,.inspector-facts dt) {
+  color: #7f8c9d;
+}
+
+.app-shell:not(.service-command-shell) .service-drive {
+  border-color: #dce5ed;
+  color: #657389;
+  background: #f5f9fc;
+}
+
+.app-shell:not(.service-command-shell) :is(.bay-inspector.risk,.promise-inspector.risk,.technician-inspector.risk) {
+  border-color: #ecc9c4;
+  background: linear-gradient(145deg, #fff8f6, #fff);
+}
+
+.app-shell:not(.service-command-shell) :is(.inspector-alert,.promise-recovery,.technician-readiness.warning) {
+  border-color: #edc8c1;
+  color: #a74f47;
+  background: #fff5f2;
+}
+
+.app-shell:not(.service-command-shell) :is(.inspector-safe,.promise-safe,.technician-readiness:not(.warning)) {
+  border-color: #cfe4da;
+  color: #27775e;
+  background: #f4fbf7;
+}
+
+/* Repair Orders */
+.app-shell:not(.service-command-shell) .rail-hours {
+  border-color: #e3e9ef;
+  color: #93a0af;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .repair-order-row {
+  border-color: #e2e8ef;
+  color: #5b697d;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .repair-order-row:hover,
+.app-shell:not(.service-command-shell) .repair-order-row.selected {
+  border-color: #aac7e8;
+  background: linear-gradient(90deg, #eef6ff, #f8fcfa);
+}
+
+.app-shell:not(.service-command-shell) :is(.repair-order-row strong,.promise-vehicle h3,.promise-facts dd) {
+  color: #2b3a50;
+}
+
+.app-shell:not(.service-command-shell) .ro-timeline {
+  background: #edf2f6;
+}
+
+.app-shell:not(.service-command-shell) .ro-timeline::before {
+  background: #d9e2ea;
+}
+
+.app-shell:not(.service-command-shell) .promise-control {
+  border-color: #dce5ed;
+  color: #718096;
+  background: #f7fafc;
+}
+
+/* Technicians */
+.app-shell:not(.service-command-shell) .technician-filters {
+  border-color: #dce5ed;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .technician-filters button {
+  color: #6c798b;
+  background: transparent;
+}
+
+.app-shell:not(.service-command-shell) .technician-filters button.active {
+  border-color: #bdd8ce;
+  color: #236f59;
+  background: #edf8f3;
+}
+
+.app-shell:not(.service-command-shell) .technician-load-row {
+  border-color: #e2e8ef;
+  color: #66758a;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .technician-load-row:hover,
+.app-shell:not(.service-command-shell) .technician-load-row.selected {
+  border-color: #aec9e9;
+  background: linear-gradient(90deg, #eef6ff, #f8fcfa);
+}
+
+.app-shell:not(.service-command-shell) :is(.technician-identity strong,.technician-profile h3,.technician-capacity strong,.technician-assignments strong) {
+  color: #2b3a50;
+}
+
+.app-shell:not(.service-command-shell) :is(.technician-identity small,.technician-profile p,.technician-capacity small,.technician-assignments small) {
+  color: #8491a1;
+}
+
+.app-shell:not(.service-command-shell) :is(.technician-load > span,.coverage-track) {
+  border-color: #d8e1e9;
+  background: #edf2f6;
+}
+
+.app-shell:not(.service-command-shell) .capacity-dial {
+  box-shadow: inset 0 0 0 1px #dce4ec;
+}
+
+.app-shell:not(.service-command-shell) .capacity-dial > span {
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .technician-certifications small {
+  border-color: #d7e6df;
+  color: #2d7d67;
+  background: #f3faf7;
+}
+
+.app-shell:not(.service-command-shell) .certification-row {
+  border-color: #e2e8ef;
+  color: #607084;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .certification-row.selected {
+  background: #f0f7ff;
+}
+
+/* Performance */
+.app-shell:not(.service-command-shell) .performance-tabs {
+  border-color: #dce5ed;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .performance-tabs button {
+  color: #748195;
+}
+
+.app-shell:not(.service-command-shell) .performance-tabs button.active {
+  border-color: #b8d7cc;
+  color: #26745d;
+  background: #edf8f3;
+}
+
+.app-shell:not(.service-command-shell) :is(.trend-summary small,.performance-column > span,.outcome-bars span,.outcome-bars strong) {
+  color: #8795a7;
+}
+
+.app-shell:not(.service-command-shell) :is(.trend-summary strong,.performance-column b) {
+  color: #2d3b50;
+}
+
+.app-shell:not(.service-command-shell) .performance-chart {
+  border-color: #dce5ed;
+  background-color: #fbfcfe;
+  background-image:
+    linear-gradient(rgba(94,116,139,.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94,116,139,.08) 1px, transparent 1px);
+}
+
+.app-shell:not(.service-command-shell) .outcome-event {
+  border-color: #e3e9ef;
+}
+
+.app-shell:not(.service-command-shell) .outcome-event > svg {
+  border-color: #efc9c3;
+  color: #c65b50;
+  background: #fff1ee;
+}
+
+.app-shell:not(.service-command-shell) .outcome-event strong {
+  color: #5a403d;
+}
+
+.app-shell:not(.service-command-shell) .outcome-flow > div {
+  border-color: #edcbc6;
+  background: #fff6f4;
+}
+
+.app-shell:not(.service-command-shell) .outcome-flow > div.protected {
+  border-color: #cfe4da;
+  background: #f3faf7;
+}
+
+.app-shell:not(.service-command-shell) .outcome-flow > div.callbacks {
+  border-color: #ead8b7;
+  background: #fffaf0;
+}
+
+.app-shell:not(.service-command-shell) .outcome-bars b {
+  border-color: #dce4ec;
+  background: #edf2f6;
+}
+
+.app-shell:not(.service-command-shell) :is(.outcome-proof,.performance-drivers > footer) {
+  border-color: #cfe4da;
+  color: #2b6f5b;
+  background: #f3faf7;
+}
+
+.app-shell:not(.service-command-shell) :is(.outcome-proof strong,.performance-drivers > footer strong,.performance-drivers article strong) {
+  color: #2e4055;
+}
+
+.app-shell:not(.service-command-shell) .performance-drivers article {
+  border-color: #e3e9ef;
+}
+
+.app-shell:not(.service-command-shell) .performance-drivers article > b {
+  border-color: #dce4ec;
+  background: #edf2f6;
+}
+
+/* AgentOps */
+.app-shell:not(.service-command-shell) .agent-fleet-list button,
+.app-shell:not(.service-command-shell) .gate-row,
+.app-shell:not(.service-command-shell) .incident-list > div,
+.app-shell:not(.service-command-shell) .failure-list > div {
+  border-color: #e1e8ef;
+  color: #627085;
+  background: #fbfcfe;
+}
+
+.app-shell:not(.service-command-shell) .agent-fleet-list button:hover,
+.app-shell:not(.service-command-shell) .agent-fleet-list button.selected {
+  border-color: #acc9e9;
+  color: #2d4f7a;
+  background: linear-gradient(90deg, #edf5ff, #f5fbf8);
+}
+
+.app-shell:not(.service-command-shell) :is(.agent-fleet-list strong,.agent-release-card strong,.agent-detail-card strong) {
+  color: #2d3c52;
+}
+
+.app-shell:not(.service-command-shell) :is(.agent-fleet-list small,.agent-release-card small,.agent-detail-card small) {
+  color: #8795a7;
+}
+
+.app-shell:not(.service-command-shell) .agent-runtime-grid > div {
+  border-color: #e1e8ef;
+  background: #f8fafc;
+}
+
+.app-shell:not(.service-command-shell) .role-boundary {
+  border-color: #dce5ed;
+  color: #66758a;
+  background: #f7fafc;
+}
+
+/* Capacity planning */
+.app-shell:not(.service-command-shell) :is(.capacity-day-focus,.capacity-day-rail button,.skill-risk-list > div,.model-evidence > div,.capacity-actions > div) {
+  border-color: #e1e8ef;
+  color: #627085;
+  background: #fbfcfe;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-rail button:hover,
+.app-shell:not(.service-command-shell) .capacity-day-rail button.selected {
+  border-color: #acc9e9;
+  background: linear-gradient(180deg, #edf5ff, #f5fbf8);
+}
+
+.app-shell:not(.service-command-shell) .forecast-chart {
+  border-color: #dce5ed;
+  background: #fbfcfe;
+}
+
+.app-shell:not(.service-command-shell) :is(.scenario-result-metrics > div,.capacity-plan-bridge > div) {
+  border-color: #e1e8ef;
+  background: #f8fafc;
+}
+
+.app-shell:not(.service-command-shell) :is(.model-note,.forecast-boundary,.capacity-approval) {
+  border-color: #dce5ed;
+  color: #66758a;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .scenario-form input {
+  border-color: #d7e1eb;
+  color: #26364d;
+  background: #fff;
+}
+
+/* Simulation Lab */
+.app-shell:not(.service-command-shell) .simulation-profile-tabs button {
+  border-color: #e1e8ef;
+  color: #66758a;
+  background: #fbfcfe;
+}
+
+.app-shell:not(.service-command-shell) .simulation-profile-tabs button.selected,
+.app-shell:not(.service-command-shell) .simulation-profile-tabs button:hover {
+  border-color: #a8c8e8;
+  color: #2c517c;
+  background: linear-gradient(145deg, #edf5ff, #f4fbf8);
+}
+
+.app-shell:not(.service-command-shell) .simulation-scale-meter,
+.app-shell:not(.service-command-shell) .simulation-candidate-map > div:last-child {
+  border-color: #dce5ed;
+  background: #eef3f7;
+}
+
+.app-shell:not(.service-command-shell) .simulation-operating-scale > div,
+.app-shell:not(.service-command-shell) .simulation-decision-path > span,
+.app-shell:not(.service-command-shell) .simulation-candidate-map,
+.app-shell:not(.service-command-shell) .simulation-baseline,
+.app-shell:not(.service-command-shell) .simulation-gate-list > div {
+  border-color: #e1e8ef;
+  color: #637085;
+  background: #f8fafc;
+}
+
+.app-shell:not(.service-command-shell) .simulation-pressure-card footer {
+  border-color: #e1e8ef;
+  background: #f5f9fc;
+}
+
+.app-shell:not(.service-command-shell) .simulation-evidence summary {
+  border-color: #dce5ed;
+  color: #314158;
+  background: #f8fafc;
+}
+
+.app-shell:not(.service-command-shell) .simulation-table-wrap,
+.app-shell:not(.service-command-shell) .simulation-evidence-body aside {
+  border-color: #e1e8ef;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .simulation-table-wrap :is(th,td) {
+  border-color: #e8edf2;
+  color: #657389;
+}
+
+.app-shell:not(.service-command-shell) .simulation-table-wrap th {
+  color: #33445a;
+  background: #f7fafc;
+}
+
+/* Diagnostic Copilot */
+.app-shell:not(.service-command-shell) :is(.complaint,.case-meta > div,.recommendation-list button,.hypothesis-copy section,.source-list > div,.parts-list > div,.tool-list > div,.recorded-outcome,.diagnostic-audit-list > div) {
+  border-color: #e1e8ef;
+  color: #637085;
+  background: #fbfcfe;
+}
+
+.app-shell:not(.service-command-shell) .recommendation-list button:hover,
+.app-shell:not(.service-command-shell) .recommendation-list button.selected {
+  border-color: #acc9e9;
+  background: linear-gradient(90deg, #edf5ff, #f5fbf8);
+}
+
+.app-shell:not(.service-command-shell) :is(.complaint p,.case-meta strong,.recommendation-list strong,.hypothesis-copy p,.source-list strong,.parts-list strong,.tool-list strong,.recorded-outcome strong) {
+  color: #2d3c52;
+}
+
+.app-shell:not(.service-command-shell) :is(.safety-control,.diagnostic-boundary,.diagnostic-empty) {
+  border-color: #dce5ed;
+  color: #66758a;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .safety-control.escalate,
+.app-shell:not(.service-command-shell) .safety-control.high-voltage {
+  border-color: #ead4af;
+  color: #8d651f;
+  background: #fff9ed;
+}
+
+.app-shell:not(.service-command-shell) :is(.escalation-input textarea,.outcome-form input,.outcome-form textarea) {
+  border-color: #d7e1eb;
+  color: #26364d;
+  background: #fff;
+}
+
+/* Shared controls, banners and loading */
+.app-shell:not(.service-command-shell) :is(.error-banner,.agentops-alert.error,.capacity-alert.error,.diagnostic-alert.error,.simulation-lab-alert.error) {
+  border-color: #efc9c3;
+  border-radius: 12px;
+  color: #a9443e;
+  background: #fff6f4;
+}
+
+.app-shell:not(.service-command-shell) :is(.success-banner,.agentops-alert.success,.capacity-alert.success,.diagnostic-alert.success,.simulation-lab-alert.success) {
+  border-color: #cce6d9;
+  border-radius: 12px;
+  color: #236e55;
+  background: #f3fbf7;
+}
+
+.app-shell:not(.service-command-shell) :is(.agentops-loading,.capacity-loading,.diagnostic-loading,.simulation-lab-loading,.technician-empty) {
+  border: 1px solid #dce5ed;
+  border-radius: 16px;
+  color: #66758a;
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 14px 34px rgba(47,64,93,.055);
+}
+
+.app-shell:not(.service-command-shell) :is(.agentops,.capacity-planning,.diagnostic-copilot,.simulation-lab) button[class*="outline"],
+.app-shell:not(.service-command-shell) :is(.agentops,.capacity-planning,.diagnostic-copilot,.simulation-lab) a {
+  border-color: #d7e1eb;
+  color: #53657b;
+  background: #fff;
+}
+
+/* Responsive corrections */
+@media (max-width: 1280px) {
+  .app-shell:not(.service-command-shell) .sidebar {
+    width: 238px;
+  }
+
+  .app-shell:not(.service-command-shell) .workspace {
+    width: calc(100% - 238px);
+    margin-left: 238px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(.topbar,.content) {
+    padding-inline: 22px;
+  }
+}
+
+@media (max-width: 820px) {
+  .app-shell:not(.service-command-shell) .sidebar {
+    width: min(304px, 88vw);
+    border-right: 1px solid #dce4ee;
+    background: rgba(255,255,255,.98);
+  }
+
+  .app-shell:not(.service-command-shell) .sidebar-open {
+    box-shadow: 18px 0 60px rgba(49,65,88,.18);
+  }
+
+  .app-shell:not(.service-command-shell) .workspace {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .app-shell:not(.service-command-shell) .mobile-close {
+    border-radius: 10px;
+    color: #657389;
+    background: #f6f9fc;
+  }
+
+  .app-shell:not(.service-command-shell) .menu-button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #d6e0ea;
+    border-radius: 11px;
+    color: #526176;
+    background: #fff;
+    box-shadow: 0 5px 14px rgba(47,64,93,.06);
+  }
+
+  .app-shell:not(.service-command-shell) .topbar {
+    min-height: 88px;
+    padding: 15px 16px;
+    background: rgba(250,252,255,.95);
+  }
+
+  .app-shell:not(.service-command-shell) .workspace-title > span {
+    font-size: .62rem;
+  }
+
+  .app-shell:not(.service-command-shell) .topbar h1 {
+    font-size: 1.12rem;
+  }
+
+  .app-shell:not(.service-command-shell) .content {
+    padding: 18px 16px 38px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(
+    .shop-board-intro,
+    .repair-orders-intro,
+    .technician-command-intro,
+    .performance-command-intro,
+    .agentops-intro,
+    .capacity-intro,
+    .diagnostic-intro,
+    .simulation-lab-hero
+  ) {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(
+    .shop-board-metrics,
+    .repair-order-metrics,
+    .technician-command-metrics,
+    .performance-command-metrics,
+    .agentops-metrics,
+    .capacity-metrics,
+    .diagnostic-metrics,
+    .simulation-outcome-strip
+  ) {
+    border-radius: 16px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(
+    .floor-plan,
+    .bay-inspector,
+    .promise-rail,
+    .promise-inspector,
+    .technician-load-board,
+    .technician-inspector,
+    .certification-matrix,
+    .performance-trend-card,
+    .recovery-outcome-card,
+    .performance-drivers,
+    .agent-fleet-card,
+    .agent-release-card,
+    .agent-detail-card,
+    .capacity-card,
+    .diagnostic-card,
+    .simulation-profile-panel,
+    .simulation-pressure-card,
+    .simulation-gates-card,
+    .simulation-evidence
+  ) {
+    border-radius: 14px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(.technician-command-content,.technician-command-view,.technician-command-layout,.technician-load-board,.technician-load-list) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .app-shell:not(.service-command-shell) .technician-load-row {
+    grid-template-columns: 48px minmax(0,1fr) auto;
+    gap: 10px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(.technician-load,.technician-live-status,.technician-ro-count) {
+    grid-column: 2 / -1;
+    justify-self: start;
+    min-width: 0;
+  }
+
+  .app-shell:not(.service-command-shell) .technician-load {
+    width: 100%;
+  }
+
+  .app-shell:not(.service-command-shell) .technician-ro-count {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell:not(.service-command-shell) .workspace-title {
+    min-width: 0;
+  }
+
+  .app-shell:not(.service-command-shell) .workspace-title > span,
+  .app-shell:not(.service-command-shell) .workspace-title h1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-shell:not(.service-command-shell) .content {
+    padding-inline: 12px;
+  }
+
+  .app-shell:not(.service-command-shell) :is(
+    .shop-board-intro,
+    .repair-orders-intro,
+    .technician-command-intro,
+    .performance-command-intro,
+    .agentops-intro,
+    .capacity-intro,
+    .diagnostic-intro,
+    .simulation-lab-hero
+  ) h2 {
+    font-size: clamp(1.55rem, 8vw, 2rem);
+    line-height: 1.08;
+  }
+
+  .app-shell:not(.service-command-shell) .bay-plan-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .app-shell:not(.service-command-shell) .performance-chart {
+    min-width: 0;
+    gap: 5px;
+    margin-inline: 10px;
+    padding-inline: 6px;
+  }
+
+  .app-shell:not(.service-command-shell) .technician-load-row {
+    grid-template-columns: 44px minmax(0,1fr);
+  }
+
+  .app-shell:not(.service-command-shell) :is(.technician-ro-count,.technician-live-status,.technician-load) {
+    grid-column: 2;
+  }
+}
