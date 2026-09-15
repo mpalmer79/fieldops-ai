@@ -2,7 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import type { ChatGPTUser } from "@/app/chatgpt-auth";
 import { optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
-import { db } from "@/lib/server/database";
+import { db, withDatabaseTransaction } from "@/lib/server/database";
 
 export { db } from "@/lib/server/database";
 
@@ -14,6 +14,9 @@ type PlanRow = { id: string; disruption_id: string; status: string; score: numbe
 const DEMO_USER_ID = "fieldops-public-demo";
 const DEMO_SESSION_COOKIE = "fieldops_demo_session";
 const DEMO_SESSION_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DEMO_WORKSPACE_CREATION_LIMIT = 120;
+const DEMO_WORKSPACE_WINDOW_MS = 60 * 60 * 1_000;
+const MAX_MUTATION_WINDOWS = 512;
 const OPTIMIZER_VERSION = "constraint-search-v1";
 const roleRank: Record<OperatorRole, number> = { technician: 1, dispatcher: 2, supervisor: 3, admin: 4 };
 const technicianIdsByName: Record<string, string> = { "Darius Miles": "T-147", "Sofia Chen": "T-208", "Amara Patel": "T-319" };
@@ -43,8 +46,12 @@ async function digestId(value: string) {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 
-async function resolveWorkspaceId(user: ChatGPTUser) {
-  if (user.userId !== DEMO_USER_ID) return `user-${await digestId(user.userId)}`;
+function isPublicDemoUser(user: ChatGPTUser) {
+  return process.env.PUBLIC_DEMO_MODE === "true" && user.userId === DEMO_USER_ID;
+}
+
+async function resolveWorkspaceId(user: ChatGPTUser, isPublicDemo: boolean) {
+  if (!isPublicDemo) return `user-${await digestId(user.userId)}`;
 
   const cookieStore = await cookies();
   let sessionId = cookieStore.get(DEMO_SESSION_COOKIE)?.value;
@@ -65,9 +72,21 @@ function policyId(operator: Operator) {
   return scopedId(operator, "dispatch-default");
 }
 
+function pruneMutationWindows(currentTime: number) {
+  for (const [key, window] of mutationWindows) {
+    if (currentTime >= window.resetAt) mutationWindows.delete(key);
+  }
+  while (mutationWindows.size >= MAX_MUTATION_WINDOWS) {
+    const oldest = mutationWindows.keys().next().value as string | undefined;
+    if (!oldest) break;
+    mutationWindows.delete(oldest);
+  }
+}
+
 function assertMutationRate(operator: Operator, action: string, limit = 12, windowMs = 60_000) {
   const key = `${operator.id}:${action}`;
   const currentTime = Date.now();
+  pruneMutationWindows(currentTime);
   const window = mutationWindows.get(key);
   if (!window || currentTime >= window.resetAt) {
     mutationWindows.set(key, { count: 1, resetAt: currentTime + windowMs });
@@ -77,18 +96,37 @@ function assertMutationRate(operator: Operator, action: string, limit = 12, wind
   window.count += 1;
 }
 
+async function assertDemoWorkspaceBudget(database: D1Database, operatorId: string) {
+  const existing = await database.prepare("SELECT id FROM operators WHERE id = ?").bind(operatorId).first<{ id: string }>();
+  if (existing) return;
+
+  const cutoff = new Date(Date.now() - DEMO_WORKSPACE_WINDOW_MS).toISOString();
+  const row = await database.prepare("SELECT COUNT(*) AS count FROM operators WHERE id LIKE 'operator:demo-%' AND created_at >= ?").bind(cutoff).first<{ count: number | string }>();
+  if (Number(row?.count ?? 0) >= DEMO_WORKSPACE_CREATION_LIMIT) {
+    throw new OperationError(429, "Public demo workspace capacity is temporarily full. Try again later.", "DEMO_CAPACITY_LIMIT");
+  }
+}
+
 export async function ensureOperationalState(user: ChatGPTUser): Promise<Operator> {
   const database = db();
   const timestamp = now();
-  const workspaceId = await resolveWorkspaceId(user);
-  const isPublicDemo = user.userId === DEMO_USER_ID;
+  const isPublicDemo = isPublicDemoUser(user);
+  const workspaceId = await resolveWorkspaceId(user, isPublicDemo);
   const operatorId = isPublicDemo ? `operator:${workspaceId}` : user.userId;
   const email = isPublicDemo ? `demo+${workspaceId.slice(5)}@fieldops-ai.local` : user.email;
+  const desiredRole: OperatorRole = isPublicDemo ? "admin" : "supervisor";
+
+  if (isPublicDemo) await assertDemoWorkspaceBudget(database, operatorId);
+
   await database.prepare(`
     INSERT INTO operators (id, email, display_name, role, created_at, updated_at)
-    VALUES (?, ?, ?, 'supervisor', ?, ?)
-    ON CONFLICT(id) DO UPDATE SET email = excluded.email, display_name = excluded.display_name, role = 'supervisor', updated_at = excluded.updated_at
-  `).bind(operatorId, email, user.displayName, timestamp, timestamp).run();
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      email = excluded.email,
+      display_name = excluded.display_name,
+      role = CASE WHEN excluded.role = 'admin' THEN 'admin' ELSE operators.role END,
+      updated_at = excluded.updated_at
+  `).bind(operatorId, email, user.displayName, desiredRole, timestamp, timestamp).run();
 
   const stored = await database.prepare("SELECT id, email, display_name, role FROM operators WHERE id = ?").bind(operatorId).first<Omit<Operator, "workspace_id">>();
   const operator = stored ? { ...stored, workspace_id: workspaceId } : null;
@@ -235,8 +273,12 @@ export async function createDisruption(operator: Operator, input: { technicianId
     if (plan) return { idempotentReplay: true, plan: await serializePlan(operator, plan) };
   }
 
+  const activePlan = await database.prepare("SELECT id, status FROM recovery_plans WHERE created_by = ? AND status NOT IN ('REJECTED', 'ROLLED_BACK') ORDER BY created_at DESC LIMIT 1").bind(operator.id).first<{ id: string; status: string }>();
+  if (activePlan) throw new OperationError(409, `Resolve the existing ${activePlan.status.toLowerCase().replaceAll("_", " ")} recovery plan before creating another disruption`, "ACTIVE_PLAN_EXISTS");
+
   const technician = await database.prepare("SELECT id, status FROM technicians WHERE id = ? AND territory = ?").bind(technicianId, operator.workspace_id).first<{ id: string; status: string }>();
   if (!technician) throw new OperationError(404, "Technician not found", "TECHNICIAN_NOT_FOUND");
+  if (technician.status === "UNAVAILABLE") throw new OperationError(409, "Technician is already unavailable and requires recovery before another disruption", "TECHNICIAN_ALREADY_UNAVAILABLE");
   const policy = await getPolicy(operator);
   const optimized = optimizeRecovery(policyWeights(policy));
   const disruptionId = existing?.id ?? scopedId(operator, `evt_${crypto.randomUUID()}`);
@@ -290,75 +332,110 @@ export async function updatePolicy(operator: Operator, input: PolicyWeights & { 
   return { ...policyWeights(policy), version: policy.version, updatedAt: policy.updated_at };
 }
 
+async function lockedPlan(database: D1Database, operator: Operator, planId: string) {
+  return database.prepare("SELECT * FROM recovery_plans WHERE id = ? AND created_by = ? FOR UPDATE").bind(planId, operator.id).first<PlanRow>();
+}
+
+function assertExpectedPlan(plan: PlanRow | null, expectedVersion: number) {
+  if (!plan) throw new OperationError(404, "Recovery plan not found", "PLAN_NOT_FOUND");
+  if (plan.version !== expectedVersion) throw new OperationError(409, "Recovery plan changed since it was loaded", "STALE_PLAN");
+  return plan;
+}
+
 export async function transitionPlan(operator: Operator, input: { planId: string; action: "approve" | "reject" | "execute" | "rollback"; expectedVersion: number }) {
   const minimum: Record<typeof input.action, OperatorRole> = { approve: "supervisor", reject: "dispatcher", execute: "supervisor", rollback: "admin" };
   requireRole(operator, minimum[input.action]);
   assertMutationRate(operator, `transition-${input.action}`, 10);
-  const plan = await db().prepare("SELECT * FROM recovery_plans WHERE id = ? AND created_by = ?").bind(input.planId, operator.id).first<PlanRow>();
-  if (!plan) throw new OperationError(404, "Recovery plan not found", "PLAN_NOT_FOUND");
-  if (plan.version !== input.expectedVersion) throw new OperationError(409, "Recovery plan changed since it was loaded", "STALE_PLAN");
 
-  if (input.action === "execute") return executePlan(operator, plan);
-  if (input.action === "rollback") return rollbackPlan(operator, plan);
-  const transitions = input.action === "approve" ? { from: "AWAITING_APPROVAL", to: "APPROVED" } : { from: ["AWAITING_APPROVAL", "APPROVED"], to: "REJECTED" };
-  const allowed = Array.isArray(transitions.from) ? transitions.from.includes(plan.status) : transitions.from === plan.status;
-  if (!allowed) throw new OperationError(409, `Cannot ${input.action} a plan in ${plan.status}`, "INVALID_TRANSITION");
-  const updated = await compareAndSetPlan(operator, plan, transitions.to);
-  await db().batch([auditStatement(db(), `${plan.id}:audit:${updated.version}:${input.action}`, "recovery_plan", plan.id, `PLAN_${input.action.toUpperCase()}`, plan.status, updated.status, operator, { expectedVersion: input.expectedVersion })]);
+  if (input.action === "execute") return executePlan(operator, input.planId, input.expectedVersion);
+  if (input.action === "rollback") return rollbackPlan(operator, input.planId, input.expectedVersion);
+
+  const updated = await withDatabaseTransaction(async database => {
+    const plan = assertExpectedPlan(await lockedPlan(database, operator, input.planId), input.expectedVersion);
+    const transitions = input.action === "approve"
+      ? { from: ["AWAITING_APPROVAL"], to: "APPROVED" }
+      : { from: ["AWAITING_APPROVAL", "APPROVED"], to: "REJECTED" };
+    if (!transitions.from.includes(plan.status)) throw new OperationError(409, `Cannot ${input.action} a plan in ${plan.status}`, "INVALID_TRANSITION");
+
+    if (input.action === "reject") {
+      const disruption = await database.prepare("SELECT technician_id, previous_technician_status FROM disruptions WHERE id = ? AND created_by = ?").bind(plan.disruption_id, operator.id).first<{ technician_id: string; previous_technician_status: string }>();
+      if (!disruption) throw new OperationError(409, "Disruption state is unavailable", "DISRUPTION_STATE_MISSING");
+      await database.prepare("UPDATE technicians SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND territory = ? AND status = 'UNAVAILABLE'").bind(disruption.previous_technician_status, now(), disruption.technician_id, operator.workspace_id).run();
+    }
+
+    const next = await compareAndSetPlan(operator, plan, transitions.to, database);
+    await auditStatement(database, `${plan.id}:audit:${next.version}:${input.action}`, "recovery_plan", plan.id, `PLAN_${input.action.toUpperCase()}`, plan.status, next.status, operator, { expectedVersion: input.expectedVersion }).run();
+    return next;
+  });
+
   return serializePlan(operator, updated);
 }
 
-async function compareAndSetPlan(operator: Operator, plan: PlanRow, nextStatus: string) {
+async function compareAndSetPlan(operator: Operator, plan: PlanRow, nextStatus: string, database: D1Database = db()) {
   const timestamp = now();
-  const result = await db().prepare("UPDATE recovery_plans SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND created_by = ? AND version = ? AND status = ?").bind(nextStatus, timestamp, plan.id, operator.id, plan.version, plan.status).run();
+  const result = await database.prepare("UPDATE recovery_plans SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND created_by = ? AND version = ? AND status = ?").bind(nextStatus, timestamp, plan.id, operator.id, plan.version, plan.status).run();
   if (result.meta.changes !== 1) throw new OperationError(409, "Recovery plan changed during this action", "STALE_PLAN");
-  const updated = await db().prepare("SELECT * FROM recovery_plans WHERE id = ? AND created_by = ?").bind(plan.id, operator.id).first<PlanRow>();
+  const updated = await database.prepare("SELECT * FROM recovery_plans WHERE id = ? AND created_by = ?").bind(plan.id, operator.id).first<PlanRow>();
   if (!updated) throw new OperationError(500, "Updated plan unavailable", "PLAN_READ_FAILED");
   return updated;
 }
 
-async function executePlan(operator: Operator, plan: PlanRow) {
-  if (plan.status !== "APPROVED") throw new OperationError(409, "Plan must be approved before execution", "INVALID_TRANSITION");
-  const executing = await compareAndSetPlan(operator, plan, "EXECUTING");
-  const database = db();
+async function executePlan(operator: Operator, planId: string, expectedVersion: number) {
+  let executed: PlanRow;
   try {
-    const result = await database.prepare("SELECT work_order_id, to_technician_id, outcome FROM plan_assignments WHERE plan_id = ?").bind(plan.id).all();
-    const timestamp = now();
-    const effects = result.results.map(row => row.outcome === "REASSIGNED"
-      ? database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'REASSIGNED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ?").bind(row.to_technician_id, timestamp, row.work_order_id, scopedId(operator, "T-274"))
-      : database.prepare("UPDATE work_orders SET assigned_technician_id = NULL, status = 'RESCHEDULE_REQUIRED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ?").bind(timestamp, row.work_order_id, scopedId(operator, "T-274")));
-    await database.batch(effects);
-    const executed = await compareAndSetPlan(operator, executing, "EXECUTED");
-    await database.batch([auditStatement(database, `${plan.id}:audit:${executed.version}:execute`, "recovery_plan", plan.id, "PLAN_EXECUTED", "APPROVED", "EXECUTED", operator, { assignmentsApplied: effects.length })]);
-    return serializePlan(operator, executed);
+    executed = await withDatabaseTransaction(async database => {
+      const plan = assertExpectedPlan(await lockedPlan(database, operator, planId), expectedVersion);
+      if (plan.status !== "APPROVED") throw new OperationError(409, "Plan must be approved before execution", "INVALID_TRANSITION");
+
+      const assignments = await database.prepare("SELECT work_order_id, to_technician_id, from_technician_id, outcome FROM plan_assignments WHERE plan_id = ? ORDER BY work_order_id").bind(plan.id).all();
+      const timestamp = now();
+      const effects = assignments.results.map(row => row.outcome === "REASSIGNED"
+        ? database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'REASSIGNED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ? AND assigned_technician_id = ? AND status = 'SCHEDULED'").bind(row.to_technician_id, timestamp, row.work_order_id, row.from_technician_id, row.from_technician_id)
+        : database.prepare("UPDATE work_orders SET assigned_technician_id = NULL, status = 'RESCHEDULE_REQUIRED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ? AND assigned_technician_id = ? AND status = 'SCHEDULED'").bind(timestamp, row.work_order_id, row.from_technician_id, row.from_technician_id));
+      const results = await database.batch(effects);
+      if (results.some(result => result.meta.changes !== 1)) throw new OperationError(409, "A repair order changed after the recovery plan was created", "STALE_WORK_ORDER");
+
+      const next = await compareAndSetPlan(operator, plan, "EXECUTED", database);
+      await auditStatement(database, `${plan.id}:audit:${next.version}:execute`, "recovery_plan", plan.id, "PLAN_EXECUTED", "APPROVED", "EXECUTED", operator, { assignmentsApplied: effects.length }).run();
+      return next;
+    });
   } catch (error) {
-    const failed = await compareAndSetPlan(operator, executing, "EXECUTION_FAILED");
-    await database.batch([auditStatement(database, `${plan.id}:audit:${failed.version}:failed`, "recovery_plan", plan.id, "PLAN_EXECUTION_FAILED", "EXECUTING", "EXECUTION_FAILED", operator, { message: error instanceof Error ? error.message : "Unknown execution failure" })]);
-    throw new OperationError(500, "Plan execution failed and was stopped for recovery", "EXECUTION_FAILED");
+    if (error instanceof OperationError) throw error;
+    throw new OperationError(500, "Plan execution failed without changing operational state", "EXECUTION_FAILED");
   }
+
+  return serializePlan(operator, executed);
 }
 
-async function rollbackPlan(operator: Operator, plan: PlanRow) {
-  if (plan.status !== "EXECUTED") throw new OperationError(409, "Only executed plans can be rolled back", "INVALID_TRANSITION");
-  const rollingBack = await compareAndSetPlan(operator, plan, "ROLLING_BACK");
-  const database = db();
+async function rollbackPlan(operator: Operator, planId: string, expectedVersion: number) {
+  let rolledBack: PlanRow;
   try {
-    const [result, disruption] = await Promise.all([
-      database.prepare("SELECT work_order_id, from_technician_id FROM plan_assignments WHERE plan_id = ?").bind(plan.id).all(),
-      database.prepare("SELECT technician_id, previous_technician_status FROM disruptions WHERE id = ? AND created_by = ?").bind(plan.disruption_id, operator.id).first<{ technician_id: string; previous_technician_status: string }>(),
-    ]);
-    if (!disruption) throw new Error("Disruption state is unavailable");
-    const timestamp = now();
-    await database.batch([
-      ...result.results.map(row => database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'SCHEDULED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ?").bind(row.from_technician_id, timestamp, row.work_order_id, disruption.technician_id)),
-      database.prepare("UPDATE technicians SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND territory = ? AND status = 'UNAVAILABLE'").bind(disruption.previous_technician_status, timestamp, disruption.technician_id, operator.workspace_id),
-    ]);
-    const rolledBack = await compareAndSetPlan(operator, rollingBack, "ROLLED_BACK");
-    await database.batch([auditStatement(database, `${plan.id}:audit:${rolledBack.version}:rollback`, "recovery_plan", plan.id, "PLAN_ROLLED_BACK", "EXECUTED", "ROLLED_BACK", operator, { assignmentsRestored: result.results.length, technicianStatusRestored: disruption.previous_technician_status })]);
-    return serializePlan(operator, rolledBack);
+    rolledBack = await withDatabaseTransaction(async database => {
+      const plan = assertExpectedPlan(await lockedPlan(database, operator, planId), expectedVersion);
+      if (plan.status !== "EXECUTED") throw new OperationError(409, "Only executed plans can be rolled back", "INVALID_TRANSITION");
+
+      const [assignments, disruption] = await Promise.all([
+        database.prepare("SELECT work_order_id, from_technician_id FROM plan_assignments WHERE plan_id = ? ORDER BY work_order_id").bind(plan.id).all(),
+        database.prepare("SELECT technician_id, previous_technician_status FROM disruptions WHERE id = ? AND created_by = ?").bind(plan.disruption_id, operator.id).first<{ technician_id: string; previous_technician_status: string }>(),
+      ]);
+      if (!disruption) throw new OperationError(409, "Disruption state is unavailable", "DISRUPTION_STATE_MISSING");
+
+      const timestamp = now();
+      const orderRestores = assignments.results.map(row => database.prepare("UPDATE work_orders SET assigned_technician_id = ?, status = 'SCHEDULED', version = version + 1, updated_at = ? WHERE id = ? AND original_technician_id = ? AND status IN ('REASSIGNED', 'RESCHEDULE_REQUIRED')").bind(row.from_technician_id, timestamp, row.work_order_id, disruption.technician_id));
+      const orderResults = await database.batch(orderRestores);
+      if (orderResults.some(result => result.meta.changes !== 1)) throw new OperationError(409, "A repair order changed after plan execution", "STALE_WORK_ORDER");
+
+      const technicianRestore = await database.prepare("UPDATE technicians SET status = ?, version = version + 1, updated_at = ? WHERE id = ? AND territory = ? AND status = 'UNAVAILABLE'").bind(disruption.previous_technician_status, timestamp, disruption.technician_id, operator.workspace_id).run();
+      if (technicianRestore.meta.changes !== 1) throw new OperationError(409, "Technician state changed after plan execution", "STALE_TECHNICIAN");
+
+      const next = await compareAndSetPlan(operator, plan, "ROLLED_BACK", database);
+      await auditStatement(database, `${plan.id}:audit:${next.version}:rollback`, "recovery_plan", plan.id, "PLAN_ROLLED_BACK", "EXECUTED", "ROLLED_BACK", operator, { assignmentsRestored: assignments.results.length, technicianStatusRestored: disruption.previous_technician_status }).run();
+      return next;
+    });
   } catch (error) {
-    const failed = await compareAndSetPlan(operator, rollingBack, "ROLLBACK_FAILED");
-    await database.batch([auditStatement(database, `${plan.id}:audit:${failed.version}:rollback-failed`, "recovery_plan", plan.id, "PLAN_ROLLBACK_FAILED", "ROLLING_BACK", "ROLLBACK_FAILED", operator, { message: error instanceof Error ? error.message : "Unknown rollback failure" })]);
-    throw new OperationError(500, "Rollback failed and requires operator intervention", "ROLLBACK_FAILED");
+    if (error instanceof OperationError) throw error;
+    throw new OperationError(500, "Rollback failed without changing operational state", "ROLLBACK_FAILED");
   }
+
+  return serializePlan(operator, rolledBack);
 }
