@@ -1,0 +1,447 @@
+/* Nested light-surface audit.
+   These rules remove hard-coded dark islands that remain inside specialized
+   workspaces after the shared light shell migration. */
+
+/* Repair-order promise inspector */
+.app-shell:not(.service-command-shell) .ro-promise small {
+  color: #506176;
+}
+
+.app-shell:not(.service-command-shell) .promise-inspector > header strong {
+  border-color: #cfe4da;
+  color: #25755d;
+  background: #f2faf6;
+}
+
+.app-shell:not(.service-command-shell) .promise-inspector.risk > header strong {
+  border-color: #efcbc5;
+  color: #b24f46;
+  background: #fff4f1;
+}
+
+.app-shell:not(.service-command-shell) .promise-vehicle {
+  border-color: #e2e8ef;
+  background: radial-gradient(circle at 18% 50%, rgba(39,139,114,.08), transparent 34%), #fbfdfe;
+}
+
+.app-shell:not(.service-command-shell) .promise-vehicle > svg {
+  border-color: #cce3da;
+  color: #278b72;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) .promise-inspector.risk .promise-vehicle > svg {
+  border-color: #ecc9c4;
+  color: #c45d53;
+  background: #fff2ef;
+}
+
+.app-shell:not(.service-command-shell) .promise-facts,
+.app-shell:not(.service-command-shell) .promise-facts > div {
+  border-color: #e2e8ef;
+}
+
+.app-shell:not(.service-command-shell) .promise-facts dt {
+  color: #8190a2;
+}
+
+.app-shell:not(.service-command-shell) .promise-facts dd {
+  color: #2d3d53;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress > span {
+  color: #748397;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress > div > div::before {
+  background: #dbe4ec;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress i {
+  border-color: #d5dfe8;
+  color: #7f8da0;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress .complete::before,
+.app-shell:not(.service-command-shell) .promise-progress .current::before {
+  background: #90c8b8;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress .complete i {
+  border-color: #9fcfbe;
+  color: #27775f;
+  background: #edf8f3;
+}
+
+.app-shell:not(.service-command-shell) .promise-progress .current i {
+  border-color: #58a890;
+  color: #25785f;
+  background: #f5fbf8;
+  box-shadow: 0 0 0 4px rgba(39,139,114,.08);
+}
+
+.app-shell:not(.service-command-shell) .promise-progress :is(.complete,.current) small {
+  color: #5f7e74;
+}
+
+/* Technician coverage and row internals */
+.app-shell:not(.service-command-shell) .coverage-visual > div {
+  background:
+    radial-gradient(circle at center, #fff 56%, transparent 57%),
+    conic-gradient(#4bcaae 0 345.6deg, #dbe4ec 345.6deg);
+}
+
+.app-shell:not(.service-command-shell) .coverage-visual strong {
+  color: #233248;
+}
+
+.app-shell:not(.service-command-shell) .coverage-visual small,
+.app-shell:not(.service-command-shell) .coverage-visual > span {
+  color: #718096;
+}
+
+.app-shell:not(.service-command-shell) .technician-command-metrics .warning svg {
+  border-color: #efc9c3;
+  color: #c45a50;
+  background: #fff2ef;
+}
+
+.app-shell:not(.service-command-shell) .technician-avatar {
+  background: #f7fafc;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.75);
+}
+
+.app-shell:not(.service-command-shell) .technician-load small,
+.app-shell:not(.service-command-shell) .technician-live-status {
+  color: #78879a;
+}
+
+.app-shell:not(.service-command-shell) .technician-load-row.unavailable.selected {
+  border-color: #efcbc5;
+  background: linear-gradient(90deg, #fff3f0, #fffafa);
+  box-shadow: inset 3px 0 #d46b60;
+}
+
+.app-shell:not(.service-command-shell) .technician-inspector > header,
+.app-shell:not(.service-command-shell) .technician-profile,
+.app-shell:not(.service-command-shell) .technician-capacity,
+.app-shell:not(.service-command-shell) .technician-assignments {
+  border-color: #e2e8ef;
+}
+
+/* Capacity planning internals */
+.app-shell:not(.service-command-shell) .capacity-peak-visual > div:first-child strong,
+.app-shell:not(.service-command-shell) .peak-balance b {
+  color: #2e3e54;
+}
+
+.app-shell:not(.service-command-shell) .capacity-peak-visual > div:first-child small,
+.app-shell:not(.service-command-shell) .peak-balance small {
+  color: #857c6b;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-focus > div {
+  border-color: #e2e8ef;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-focus small {
+  color: #8190a2;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-focus strong,
+.app-shell:not(.service-command-shell) .capacity-plan-bridge strong {
+  color: #2d3d53;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-rail button > span {
+  border-color: #dbe4ec;
+}
+
+.app-shell:not(.service-command-shell) .capacity-day-rail button > strong {
+  color: #728196;
+}
+
+.app-shell:not(.service-command-shell) .capacity-plan-bridge {
+  border-color: #e2e8ef;
+  background: linear-gradient(90deg, rgba(199,138,53,.07), rgba(39,139,114,.06));
+}
+
+.app-shell:not(.service-command-shell) .capacity-plan-bridge small,
+.app-shell:not(.service-command-shell) .capacity-plan-bridge > span {
+  color: #7d8b9d;
+}
+
+.app-shell:not(.service-command-shell) :is(.forecast-context,.benchmark-verdict) {
+  border-color: #d7e2ec;
+  color: #536176;
+  background: rgba(255,255,255,.78);
+}
+
+.app-shell:not(.service-command-shell) :is(.forecast-context,.benchmark-verdict) strong {
+  color: #26364d;
+}
+
+.app-shell:not(.service-command-shell) :is(.forecast-context,.benchmark-verdict) small {
+  color: #7b899a;
+}
+
+.app-shell:not(.service-command-shell) :is(.forecast-boundary,.benchmark-boundary,.model-note,.method-note,.baseline-card,.baseline-empty) {
+  border-color: #dce5ed;
+  color: #66758a;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) :is(.forecast-boundary,.benchmark-boundary,.model-note,.method-note) strong {
+  color: #2e4055;
+}
+
+.app-shell:not(.service-command-shell) .model-evidence dd,
+.app-shell:not(.service-command-shell) .methodology-card dd {
+  color: #34455b;
+}
+
+.app-shell:not(.service-command-shell) .model-evidence dt,
+.app-shell:not(.service-command-shell) .methodology-card dt {
+  color: #8190a2;
+}
+
+.app-shell:not(.service-command-shell) .capacity-actions > div > span {
+  border-color: #cfe4da;
+  color: #27775f;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) .capacity-approval {
+  border-color: #dce5ed;
+  background: #f7fafc;
+}
+
+/* Shared module labels and forms */
+.app-shell:not(.service-command-shell) :is(.agentops-card-heading,.capacity-card-heading,.diagnostic-card-heading) > span {
+  border-color: #d7e1eb;
+  border-radius: 8px;
+  color: #718096;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) .recommendation-rank {
+  border: 1px solid #dbe4ec;
+  border-radius: 8px;
+  color: #567087;
+  background: #eef4f8;
+}
+
+.app-shell:not(.service-command-shell) :is(.scenario-name input,.outcome-form input,.outcome-form textarea,.escalation-input textarea) {
+  border-color: #d7e1eb;
+  border-radius: 9px;
+  color: #26364d;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .scenario-name input:focus {
+  border-color: #77a7df;
+  box-shadow: 0 0 0 3px rgba(57,113,200,.10);
+}
+
+/* Diagnostic evidence */
+.app-shell:not(.service-command-shell) .complaint code,
+.app-shell:not(.service-command-shell) .benchmark-table-wrap code {
+  border-color: #cfe3dc;
+  border-radius: 7px;
+  color: #25745d;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) .source-list > div > span,
+.app-shell:not(.service-command-shell) .tool-list > div > span {
+  border: 1px solid #cfe3dc;
+  border-radius: 9px;
+  color: #278b72;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) .case-meta span,
+.app-shell:not(.service-command-shell) .source-list p,
+.app-shell:not(.service-command-shell) .source-list small,
+.app-shell:not(.service-command-shell) .tool-list small,
+.app-shell:not(.service-command-shell) .diagnostic-audit-list small {
+  color: #7d8b9d;
+}
+
+.app-shell:not(.service-command-shell) .case-status,
+.app-shell:not(.service-command-shell) .recommendation-state,
+.app-shell:not(.service-command-shell) .tool-success,
+.app-shell:not(.service-command-shell) .outcome-complete {
+  border-radius: 999px;
+}
+
+.app-shell:not(.service-command-shell) .diagnostic-empty,
+.app-shell:not(.service-command-shell) .capacity-empty {
+  border-color: #dce5ed;
+  border-radius: 14px;
+  color: #6c7a8d;
+  background: #f8fafc;
+}
+
+/* Simulation details */
+.app-shell:not(.service-command-shell) .simulation-readiness-ring > span {
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .simulation-readiness-ring strong {
+  color: #24344b;
+}
+
+.app-shell:not(.service-command-shell) .simulation-operating-scale > div svg,
+.app-shell:not(.service-command-shell) .simulation-pressure-card footer svg {
+  color: #278b72;
+}
+
+.app-shell:not(.service-command-shell) .simulation-decision-path > svg {
+  color: #91a0b1;
+}
+
+.app-shell:not(.service-command-shell) .simulation-decision-path > span strong,
+.app-shell:not(.service-command-shell) .simulation-operating-scale strong,
+.app-shell:not(.service-command-shell) .simulation-pressure-card footer strong,
+.app-shell:not(.service-command-shell) .simulation-gate-list strong {
+  color: #2b3b51;
+}
+
+.app-shell:not(.service-command-shell) .simulation-decision-path > span small,
+.app-shell:not(.service-command-shell) .simulation-operating-scale small,
+.app-shell:not(.service-command-shell) .simulation-pressure-card footer small,
+.app-shell:not(.service-command-shell) .simulation-gate-list small,
+.app-shell:not(.service-command-shell) .simulation-baseline small {
+  color: #7d8b9d;
+}
+
+.app-shell:not(.service-command-shell) .simulation-candidate-map > div:first-child {
+  color: #526176;
+}
+
+.app-shell:not(.service-command-shell) .simulation-baseline.empty {
+  color: #718096;
+}
+
+/* AgentOps deep surfaces */
+.app-shell:not(.service-command-shell) .gate-row :is(strong,span),
+.app-shell:not(.service-command-shell) .incident-list strong,
+.app-shell:not(.service-command-shell) .failure-list strong,
+.app-shell:not(.service-command-shell) .agent-runtime-grid strong {
+  color: #2d3d53;
+}
+
+.app-shell:not(.service-command-shell) .gate-row small,
+.app-shell:not(.service-command-shell) .incident-list small,
+.app-shell:not(.service-command-shell) .failure-list small,
+.app-shell:not(.service-command-shell) .agent-runtime-grid small {
+  color: #7d8b9d;
+}
+
+/* Table and search surfaces used by light workspaces */
+.app-shell:not(.service-command-shell) .search {
+  border-color: #d7e1eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.app-shell:not(.service-command-shell) .search input {
+  color: #2d3d53;
+}
+
+.app-shell:not(.service-command-shell) .search input::placeholder,
+.app-shell:not(.service-command-shell) .search svg {
+  color: #91a0b1;
+}
+
+.app-shell:not(.service-command-shell) th {
+  border-color: #e2e8ef;
+  color: #718096;
+  background: #f7fafc;
+}
+
+.app-shell:not(.service-command-shell) td {
+  border-color: #e7edf2;
+  color: #5f6f83;
+}
+
+.app-shell:not(.service-command-shell) tbody tr:hover {
+  background: #f5faf8;
+}
+
+.app-shell:not(.service-command-shell) .tech strong {
+  color: #2d3d53;
+}
+
+.app-shell:not(.service-command-shell) .tech small,
+.app-shell:not(.service-command-shell) .util strong {
+  color: #718096;
+}
+
+.app-shell:not(.service-command-shell) .util > span {
+  background: #e5ebf0;
+}
+
+/* Preserve semantic status color while removing black fills. */
+.app-shell:not(.service-command-shell) .status {
+  border-color: #cce5db;
+  color: #26745d;
+  background: #f1faf6;
+}
+
+.app-shell:not(.service-command-shell) .status.at-service {
+  border-color: #ead8b7;
+  color: #946621;
+  background: #fff8ed;
+}
+
+.app-shell:not(.service-command-shell) .status.available {
+  border-color: #cddfee;
+  color: #36739a;
+  background: #f1f8fc;
+}
+
+.app-shell:not(.service-command-shell) .status.unavailable {
+  border-color: #efcbc5;
+  color: #b65349;
+  background: #fff3f0;
+}
+
+/* Mobile nested panels */
+@media (max-width: 820px) {
+  .app-shell:not(.service-command-shell) .coverage-visual,
+  .app-shell:not(.service-command-shell) .capacity-peak-visual,
+  .app-shell:not(.service-command-shell) :is(.forecast-context,.benchmark-verdict,.diagnostic-context) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .app-shell:not(.service-command-shell) .capacity-day-focus {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .app-shell:not(.service-command-shell) .capacity-day-focus > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .app-shell:not(.service-command-shell) .capacity-day-focus > div:nth-child(-n+2) {
+    border-bottom: 1px solid #e2e8ef;
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell:not(.service-command-shell) .capacity-day-focus {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell:not(.service-command-shell) .capacity-day-focus > div {
+    border-right: 0;
+    border-bottom: 1px solid #e2e8ef;
+  }
+
+  .app-shell:not(.service-command-shell) .capacity-day-focus > div:last-child {
+    border-bottom: 0;
+  }
+}
