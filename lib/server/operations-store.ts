@@ -1,7 +1,12 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { ChatGPTUser } from "@/app/chatgpt-auth";
-import { optimizeRecovery, type PolicyWeights, type RecoveryPlan } from "@/lib/dispatch-optimizer";
+import {
+  optimizeRecovery,
+  type PolicyWeights,
+  type RecoveryOptimizationState,
+  type RecoveryPlan,
+} from "@/lib/dispatch-optimizer";
 import { db, withDatabaseTransaction } from "@/lib/server/database";
 
 export { db } from "@/lib/server/database";
@@ -10,6 +15,8 @@ export type OperatorRole = "technician" | "dispatcher" | "supervisor" | "admin";
 export type Operator = { id: string; email: string; display_name: string; role: OperatorRole; workspace_id: string };
 type PolicyRow = { id: string; sla_weight: number; travel_weight: number; load_weight: number; overtime_weight: number; stability_weight: number; version: number; updated_at: string };
 type PlanRow = { id: string; disruption_id: string; status: string; score: number; confidence: number; projected_sla: number; added_travel: number; overtime: number; policy_version: number; optimizer_version: string; version: number; created_by: string; created_at: string; updated_at: string };
+type OptimizerTechnicianRow = { id: string; name: string; status: string; territory: string; skills_json: string; parts_json: string; route_capacity: number; active_stops: number; route_miles: number; utilization: number };
+type OptimizerWorkOrderRow = { id: string; appointment_window: string; appliance: string; city: string; required_skill: string; part_code: string | null };
 
 const DEMO_USER_ID = "fieldops-public-demo";
 const DEMO_SESSION_COOKIE = "fieldops_demo_session";
@@ -17,9 +24,8 @@ const DEMO_SESSION_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-
 const DEMO_WORKSPACE_CREATION_LIMIT = 120;
 const DEMO_WORKSPACE_WINDOW_MS = 60 * 60 * 1_000;
 const MAX_MUTATION_WINDOWS = 512;
-const OPTIMIZER_VERSION = "constraint-search-v1";
+const OPTIMIZER_VERSION = "constraint-search-v2-persisted-state";
 const roleRank: Record<OperatorRole, number> = { technician: 1, dispatcher: 2, supervisor: 3, admin: 4 };
-const technicianIdsByName: Record<string, string> = { "Darius Miles": "T-147", "Sofia Chen": "T-208", "Amara Patel": "T-319" };
 const mutationWindows = new Map<string, { count: number; resetAt: number }>();
 
 function now() {
@@ -178,6 +184,76 @@ async function getPolicy(operator: Operator): Promise<PolicyRow> {
   return row;
 }
 
+function parseStringArray(value: string) {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseAuditMetadata(value: string | null | undefined) {
+  try {
+    const parsed: unknown = JSON.parse(value ?? "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+async function loadRecoveryOptimizationState(
+  operator: Operator,
+  disruptedTechnicianId: string,
+): Promise<RecoveryOptimizationState> {
+  const database = db();
+  const internalDisruptedId = scopedId(operator, disruptedTechnicianId);
+  const [technicianResult, workOrderResult] = await Promise.all([
+    database.prepare(`
+      SELECT id, name, status, territory, skills_json, parts_json, route_capacity, active_stops, route_miles, utilization
+      FROM technicians
+      WHERE territory = ?
+      ORDER BY id
+    `).bind(operator.workspace_id).all<OptimizerTechnicianRow>(),
+    database.prepare(`
+      SELECT id, appointment_window, appliance, city, required_skill, part_code
+      FROM work_orders
+      WHERE original_technician_id = ? AND assigned_technician_id = ? AND status = 'SCHEDULED'
+      ORDER BY id
+    `).bind(internalDisruptedId, internalDisruptedId).all<OptimizerWorkOrderRow>(),
+  ]);
+
+  const disrupted = technicianResult.results.find(row => row.id === internalDisruptedId);
+  if (!disrupted) throw new OperationError(404, "Technician not found", "TECHNICIAN_NOT_FOUND");
+  if (workOrderResult.results.length === 0) throw new OperationError(409, "No scheduled repair orders remain for this disruption", "NO_RECOVERY_WORK");
+
+  return {
+    territory: operator.workspace_id,
+    disruptedTechnicianId,
+    disruptedTechnicianName: disrupted.name,
+    technicians: technicianResult.results.map(row => ({
+      id: publicId(operator, row.id),
+      name: row.name,
+      status: row.status,
+      territory: row.territory,
+      skills: parseStringArray(row.skills_json),
+      parts: parseStringArray(row.parts_json),
+      routeCapacity: Number(row.route_capacity),
+      activeStops: Number(row.active_stops),
+      routeMiles: Number(row.route_miles),
+      utilization: Number(row.utilization),
+    })),
+    workOrders: workOrderResult.results.map(row => ({
+      id: publicId(operator, row.id),
+      window: row.appointment_window,
+      serviceOperation: row.appliance,
+      vehicle: row.city,
+      requiredSkill: row.required_skill,
+      partCode: row.part_code,
+    })),
+  };
+}
+
 export async function getOperationSnapshot(operator: Operator) {
   const database = db();
   const [technicianResult, orderResult, policy, plan, auditResult] = await Promise.all([
@@ -226,16 +302,21 @@ export async function getOperationSnapshot(operator: Operator) {
 
 async function serializePlan(operator: Operator, plan: PlanRow) {
   if (plan.created_by !== operator.id) throw new OperationError(404, "Recovery plan not found", "PLAN_NOT_FOUND");
-  const result = await db().prepare(`
-    SELECT pa.*, wo.appointment_window, wo.appliance, wo.city, source.name AS from_name, target.name AS to_name
-    FROM plan_assignments pa
-    JOIN work_orders wo ON wo.id = pa.work_order_id
-    LEFT JOIN technicians source ON source.id = pa.from_technician_id
-    LEFT JOIN technicians target ON target.id = pa.to_technician_id
-    WHERE pa.plan_id = ?
-    ORDER BY pa.work_order_id
-  `).bind(plan.id).all();
+  const database = db();
+  const [result, evidenceRow] = await Promise.all([
+    database.prepare(`
+      SELECT pa.*, wo.appointment_window, wo.appliance, wo.city, source.name AS from_name, target.name AS to_name
+      FROM plan_assignments pa
+      JOIN work_orders wo ON wo.id = pa.work_order_id
+      LEFT JOIN technicians source ON source.id = pa.from_technician_id
+      LEFT JOIN technicians target ON target.id = pa.to_technician_id
+      WHERE pa.plan_id = ?
+      ORDER BY pa.work_order_id
+    `).bind(plan.id).all(),
+    database.prepare("SELECT metadata_json FROM audit_log WHERE entity_type = 'recovery_plan' AND entity_id = ? AND action = 'PLAN_CREATED' ORDER BY created_at ASC LIMIT 1").bind(plan.id).first<{ metadata_json: string }>(),
+  ]);
   const rows = result.results as Array<Record<string, unknown>>;
+  const evidence = parseAuditMetadata(evidenceRow?.metadata_json);
   return {
     id: plan.id,
     disruptionId: plan.disruption_id,
@@ -248,9 +329,9 @@ async function serializePlan(operator: Operator, plan: PlanRow) {
     overtime: plan.overtime,
     policyVersion: plan.policy_version,
     optimizerVersion: plan.optimizer_version,
-    scenariosEvaluated: 896,
-    feasibleScenarios: 150,
-    rejectedCandidates: 2,
+    scenariosEvaluated: Number(evidence.scenariosEvaluated ?? 0),
+    feasibleScenarios: Number(evidence.feasibleScenarios ?? 0),
+    rejectedCandidates: Number(evidence.rejectedCandidates ?? 0),
     assignments: rows.filter(row => row.outcome === "REASSIGNED").map(row => ({ jobId: publicId(operator, row.work_order_id as string), window: row.appointment_window as string, job: `${row.appliance} · ${row.city}`, from: row.from_name as string, to: row.to_name as string, impactMinutes: row.impact_minutes as number, travelMiles: row.travel_miles as number, overtimeHours: row.overtime_hours as number })),
     rescheduled: rows.filter(row => row.outcome === "RESCHEDULED").map(row => ({ id: publicId(operator, row.work_order_id as string), job: `${row.appliance} · ${row.city}`, window: row.appointment_window as string })),
     createdAt: plan.created_at,
@@ -279,8 +360,11 @@ export async function createDisruption(operator: Operator, input: { technicianId
   const technician = await database.prepare("SELECT id, status FROM technicians WHERE id = ? AND territory = ?").bind(technicianId, operator.workspace_id).first<{ id: string; status: string }>();
   if (!technician) throw new OperationError(404, "Technician not found", "TECHNICIAN_NOT_FOUND");
   if (technician.status === "UNAVAILABLE") throw new OperationError(409, "Technician is already unavailable and requires recovery before another disruption", "TECHNICIAN_ALREADY_UNAVAILABLE");
-  const policy = await getPolicy(operator);
-  const optimized = optimizeRecovery(policyWeights(policy));
+  const [policy, recoveryState] = await Promise.all([
+    getPolicy(operator),
+    loadRecoveryOptimizationState(operator, input.technicianId),
+  ]);
+  const optimized = optimizeRecovery(recoveryState, policyWeights(policy));
   const disruptionId = existing?.id ?? scopedId(operator, `evt_${crypto.randomUUID()}`);
   const planId = `plan_${disruptionId}`;
   const timestamp = now();
@@ -299,8 +383,17 @@ export async function createDisruption(operator: Operator, input: { technicianId
   const statements: D1PreparedStatement[] = [
     database.prepare("UPDATE technicians SET status = 'UNAVAILABLE', version = version + 1, updated_at = ? WHERE id = ? AND territory = ?").bind(timestamp, technicianId, operator.workspace_id),
     database.prepare(`INSERT OR IGNORE INTO recovery_plans (id, disruption_id, status, score, confidence, projected_sla, added_travel, overtime, policy_version, optimizer_version, version, created_by, created_at, updated_at) VALUES (?, ?, 'AWAITING_APPROVAL', ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`).bind(planId, disruptionId, optimized.score, optimized.confidence, optimized.projectedSla, optimized.addedTravel, optimized.overtime, policy.version, OPTIMIZER_VERSION, operator.id, timestamp, timestamp),
-    ...planStatements(database, operator, planId, optimized),
-    auditStatement(database, `audit_${disruptionId}_created`, "recovery_plan", planId, "PLAN_CREATED", null, "AWAITING_APPROVAL", operator, { technicianId: input.technicianId, scenariosEvaluated: optimized.scenariosEvaluated, feasibleScenarios: optimized.feasibleScenarios, policyVersion: policy.version }, timestamp),
+    ...planStatements(database, operator, planId, optimized, input.technicianId),
+    auditStatement(database, `audit_${disruptionId}_created`, "recovery_plan", planId, "PLAN_CREATED", null, "AWAITING_APPROVAL", operator, {
+      technicianId: input.technicianId,
+      technicianCount: recoveryState.technicians.length,
+      affectedWorkOrders: recoveryState.workOrders.length,
+      scenariosEvaluated: optimized.scenariosEvaluated,
+      feasibleScenarios: optimized.feasibleScenarios,
+      rejectedCandidates: optimized.rejectedCandidates,
+      policyVersion: policy.version,
+      inputSource: "persisted-operational-state",
+    }, timestamp),
   ];
   await database.batch(statements);
   const plan = await database.prepare("SELECT * FROM recovery_plans WHERE id = ? AND created_by = ?").bind(planId, operator.id).first<PlanRow>();
@@ -308,10 +401,16 @@ export async function createDisruption(operator: Operator, input: { technicianId
   return { idempotentReplay: false, plan: await serializePlan(operator, plan) };
 }
 
-function planStatements(database: D1Database, operator: Operator, planId: string, plan: RecoveryPlan): D1PreparedStatement[] {
+function planStatements(
+  database: D1Database,
+  operator: Operator,
+  planId: string,
+  plan: RecoveryPlan,
+  disruptedTechnicianId: string,
+): D1PreparedStatement[] {
   return [
-    ...plan.assignments.map(assignment => database.prepare(`INSERT OR IGNORE INTO plan_assignments (id, plan_id, work_order_id, from_technician_id, to_technician_id, impact_minutes, travel_miles, overtime_hours, outcome) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'REASSIGNED')`).bind(`${planId}_${assignment.jobId}`, planId, scopedId(operator, assignment.jobId), scopedId(operator, "T-274"), scopedId(operator, technicianIdsByName[assignment.to]), assignment.impactMinutes, assignment.travelMiles, assignment.overtimeHours)),
-    ...plan.rescheduled.map(item => database.prepare(`INSERT OR IGNORE INTO plan_assignments (id, plan_id, work_order_id, from_technician_id, to_technician_id, impact_minutes, travel_miles, overtime_hours, outcome) VALUES (?, ?, ?, ?, NULL, 0, 0, 0, 'RESCHEDULED')`).bind(`${planId}_${item.id}`, planId, scopedId(operator, item.id), scopedId(operator, "T-274"))),
+    ...plan.assignments.map(assignment => database.prepare(`INSERT OR IGNORE INTO plan_assignments (id, plan_id, work_order_id, from_technician_id, to_technician_id, impact_minutes, travel_miles, overtime_hours, outcome) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'REASSIGNED')`).bind(`${planId}_${assignment.jobId}`, planId, scopedId(operator, assignment.jobId), scopedId(operator, assignment.fromTechnicianId), scopedId(operator, assignment.toTechnicianId), assignment.impactMinutes, assignment.travelMiles, assignment.overtimeHours)),
+    ...plan.rescheduled.map(item => database.prepare(`INSERT OR IGNORE INTO plan_assignments (id, plan_id, work_order_id, from_technician_id, to_technician_id, impact_minutes, travel_miles, overtime_hours, outcome) VALUES (?, ?, ?, ?, NULL, 0, 0, 0, 'RESCHEDULED')`).bind(`${planId}_${item.id}`, planId, scopedId(operator, item.id), scopedId(operator, disruptedTechnicianId))),
   ];
 }
 
