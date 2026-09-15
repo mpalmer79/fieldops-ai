@@ -1,16 +1,16 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import {
   Bot,
+  Code2,
   ExternalLink,
-  Github,
   Globe2,
-  Linkedin,
   MessageCircleMore,
   Send,
   Sparkles,
+  UserRound,
   X,
 } from "lucide-react";
 import {
@@ -26,9 +26,9 @@ type ChatMessage =
   | { id: number; role: "user"; text: string }
   | { id: number; role: "assistant"; reply: AssistantReply };
 
-const linkIcons: Record<string, React.ReactNode> = {
-  LinkedIn: <Linkedin aria-hidden="true" />,
-  GitHub: <Github aria-hidden="true" />,
+const linkIcons: Record<string, ReactNode> = {
+  LinkedIn: <UserRound aria-hidden="true" />,
+  GitHub: <Code2 aria-hidden="true" />,
   Portfolio: <Globe2 aria-hidden="true" />,
 };
 
