@@ -6,6 +6,36 @@ export type PolicyWeights = {
   stability: number;
 };
 
+export type RecoveryTechnicianInput = {
+  id: string;
+  name: string;
+  status: string;
+  territory: string;
+  skills: string[];
+  parts: string[];
+  routeCapacity: number;
+  activeStops: number;
+  routeMiles: number;
+  utilization: number;
+};
+
+export type RecoveryWorkOrderInput = {
+  id: string;
+  window: string;
+  serviceOperation: string;
+  vehicle: string;
+  requiredSkill: string;
+  partCode: string | null;
+};
+
+export type RecoveryOptimizationState = {
+  territory: string;
+  disruptedTechnicianId: string;
+  disruptedTechnicianName: string;
+  technicians: RecoveryTechnicianInput[];
+  workOrders: RecoveryWorkOrderInput[];
+};
+
 type Candidate = {
   technicianId: string;
   technicianName: string;
@@ -13,18 +43,9 @@ type Candidate = {
   delayMinutes: number;
   overtimeHours: number;
   scheduleDisplacementMinutes: number;
-  certified: boolean;
-  inTerritory: boolean;
-  partAvailable: boolean;
-  onShift: boolean;
 };
 
-type Job = {
-  id: string;
-  window: string;
-  serviceOperation: string;
-  vehicle: string;
-  laborHours: number;
+type Job = RecoveryWorkOrderInput & {
   promiseCriticality: number;
   callbackCost: number;
   candidates: Candidate[];
@@ -40,8 +61,13 @@ type RawMetrics = {
   stability: number;
 };
 
-type EvaluatedPlan = {
+type SearchPlan = {
   choices: Array<Candidate | null>;
+  assignedCount: number;
+  metrics?: RawMetrics;
+};
+
+type EvaluatedPlan = SearchPlan & {
   metrics: RawMetrics;
   objectiveScores: ObjectiveScores;
   score: number;
@@ -51,6 +77,8 @@ export type Assignment = {
   jobId: string;
   window: string;
   job: string;
+  fromTechnicianId: string;
+  toTechnicianId: string;
   from: string;
   to: string;
   impactMinutes: number;
@@ -73,115 +101,49 @@ export type RecoveryPlan = {
   decisionEvidence?: {
     callbacks: number;
     scheduleDisplacementMinutes: number;
-    flaggedHoursSpread: number;
+    projectedLoadSpreadPoints: number;
   };
 };
 
-const capacities: Record<string, number> = { "T-147": 2, "T-208": 1, "T-319": 2 };
-const availableHours: Record<string, number> = { "T-147": 6, "T-208": 3.5, "T-319": 6 };
-const requiredAssignments = Object.values(capacities).reduce((sum, value) => sum + value, 0);
+export type RecoveryConstraintResult = {
+  eligible: boolean;
+  reasons: Array<"disrupted-technician" | "territory" | "off-shift" | "skill" | "part" | "capacity">;
+};
+
 const objectiveKeys: Array<keyof PolicyWeights> = ["sla", "travel", "load", "overtime", "stability"];
+const unavailableStatuses = new Set(["UNAVAILABLE", "OFF_SHIFT", "ABSENT"]);
 
-const candidate = (
-  technicianId: string,
-  technicianName: string,
-  travelMiles: number,
-  delayMinutes: number,
-  overtimeHours: number,
-  scheduleDisplacementMinutes: number,
-  overrides: Partial<Candidate> = {},
-): Candidate => ({
-  technicianId,
-  technicianName,
-  travelMiles,
-  delayMinutes,
-  overtimeHours,
-  scheduleDisplacementMinutes,
-  certified: true,
-  inTerritory: true,
-  partAvailable: true,
-  onShift: true,
-  ...overrides,
-});
-
-const jobs: Job[] = [
-  {
-    id: "WO-48321",
-    window: "11:00 AM",
-    serviceOperation: "Check-engine diagnosis",
-    vehicle: "2023 GV70",
-    laborHours: 2.2,
-    promiseCriticality: 1,
-    callbackCost: 1,
-    candidates: [candidate("T-319", "Amara Patel", 6.4, 14, 0, 22), candidate("T-147", "Darius Miles", 9.1, 24, 0, 8)],
-  },
-  {
-    id: "WO-48344",
-    window: "1:00 PM",
-    serviceOperation: "Brake vibration",
-    vehicle: "2022 G80",
-    laborHours: 1.4,
-    promiseCriticality: 0.9,
-    callbackCost: 0.88,
-    candidates: [candidate("T-147", "Darius Miles", 5.2, 9, 0, 24), candidate("T-319", "Amara Patel", 7.8, 18, 0, 5)],
-  },
-  {
-    id: "WO-48367",
-    window: "3:00 PM",
-    serviceOperation: "60K maintenance",
-    vehicle: "2021 GV80",
-    laborHours: 2.8,
-    promiseCriticality: 0.7,
-    callbackCost: 0.62,
-    candidates: [candidate("T-208", "Sofia Chen", 8.1, 18, 0.2, 9), candidate("T-319", "Amara Patel", 11.7, 27, 0.1, 18), candidate("T-147", "Darius Miles", 10.4, 25, 0, 26)],
-  },
-  {
-    id: "WO-48372",
-    window: "3:30 PM",
-    serviceOperation: "Intermittent no-start",
-    vehicle: "2023 G70",
-    laborHours: 3.5,
-    promiseCriticality: 0.82,
-    callbackCost: 0.92,
-    candidates: [candidate("T-319", "Amara Patel", 13.2, 35, 0.2, 10), candidate("T-147", "Darius Miles", 16.8, 42, 0.3, 5)],
-  },
-  {
-    id: "WO-48389",
-    window: "4:00 PM",
-    serviceOperation: "Recall campaign",
-    vehicle: "2024 GV80",
-    laborHours: 1.1,
-    promiseCriticality: 0.6,
-    callbackCost: 0.48,
-    candidates: [candidate("T-147", "Darius Miles", 14.3, 37, 0.4, 14), candidate("T-319", "Amara Patel", 21.6, 48, 0.5, 8)],
-  },
-  {
-    id: "WO-48401",
-    window: "2:00 PM",
-    serviceOperation: "ADAS calibration",
-    vehicle: "2023 GV60",
-    laborHours: 2.4,
-    promiseCriticality: 0.86,
-    callbackCost: 0.95,
-    candidates: [candidate("T-208", "Sofia Chen", 4.9, 11, 0, 25), candidate("T-319", "Amara Patel", 8.7, 20, 0, 7), candidate("T-147", "Darius Miles", 7.3, 17, 0, 12, { partAvailable: false })],
-  },
-  {
-    id: "WO-48412",
-    window: "4:30 PM",
-    serviceOperation: "Cooling-system repair",
-    vehicle: "2022 G90",
-    laborHours: 3.2,
-    promiseCriticality: 0.55,
-    callbackCost: 0.7,
-    candidates: [candidate("T-147", "Darius Miles", 12.8, 31, 0.3, 8), candidate("T-319", "Amara Patel", 10.6, 29, 0.2, 20), candidate("T-208", "Sofia Chen", 9.2, 22, 0, 7, { certified: false })],
-  },
-];
-
-const isEligible = (value: Candidate) => value.certified && value.inTerritory && value.partAvailable && value.onShift;
 const round = (value: number, precision = 1) => {
   const factor = 10 ** precision;
   return Math.round(value * factor) / factor;
 };
+
+function remainingCapacity(technician: RecoveryTechnicianInput) {
+  return Math.max(0, Math.floor(technician.routeCapacity) - Math.max(0, Math.floor(technician.activeStops)));
+}
+
+export function evaluateRecoveryConstraints(
+  state: RecoveryOptimizationState,
+  workOrder: RecoveryWorkOrderInput,
+  technician: RecoveryTechnicianInput,
+): RecoveryConstraintResult {
+  const reasons: RecoveryConstraintResult["reasons"] = [];
+  if (technician.id === state.disruptedTechnicianId) reasons.push("disrupted-technician");
+  if (technician.territory !== state.territory) reasons.push("territory");
+  if (unavailableStatuses.has(technician.status)) reasons.push("off-shift");
+  if (!technician.skills.includes(workOrder.requiredSkill)) reasons.push("skill");
+  if (workOrder.partCode && !technician.parts.includes(workOrder.partCode)) reasons.push("part");
+  if (remainingCapacity(technician) < 1) reasons.push("capacity");
+  return { eligible: reasons.length === 0, reasons };
+}
+
+function parseWindowMinutes(value: string) {
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  let hour = Number(match[1]) % 12;
+  if (match[3].toUpperCase() === "PM") hour += 12;
+  return hour * 60 + Number(match[2]);
+}
 
 function sanitizeWeights(weights: PolicyWeights): PolicyWeights {
   const sanitized = Object.fromEntries(objectiveKeys.map(key => {
@@ -194,8 +156,70 @@ function sanitizeWeights(weights: PolicyWeights): PolicyWeights {
   return sanitized;
 }
 
-function planMetrics(choices: Array<Candidate | null>): RawMetrics {
-  const technicianHours: Record<string, number> = Object.fromEntries(Object.keys(capacities).map(id => [id, 0]));
+function candidateMetrics(technician: RecoveryTechnicianInput, promiseRank: number): Candidate {
+  const capacity = Math.max(1, technician.routeCapacity);
+  const queueRatio = Math.min(1.5, Math.max(0, technician.activeStops / capacity));
+  const utilization = Math.min(130, Math.max(0, technician.utilization));
+  const milesPerStop = technician.activeStops > 0
+    ? Math.max(0, technician.routeMiles) / technician.activeStops
+    : Math.max(0, technician.routeMiles);
+
+  return {
+    technicianId: technician.id,
+    technicianName: technician.name,
+    travelMiles: round(milesPerStop * (1 + promiseRank * 0.025)),
+    delayMinutes: Math.round(6 + queueRatio * 15 + Math.max(0, utilization - 70) * 0.32 + promiseRank * 1.5),
+    overtimeHours: round(Math.max(0, utilization - 88) / 20 + Math.max(0, queueRatio - 0.85) * 0.5),
+    scheduleDisplacementMinutes: Math.round(4 + technician.activeStops * 1.3 + queueRatio * 8 + promiseRank * 1.4),
+  };
+}
+
+function buildJobs(state: RecoveryOptimizationState) {
+  const recipients = state.technicians.filter(technician => technician.id !== state.disruptedTechnicianId);
+  const orderedOrders = [...state.workOrders].sort((left, right) => {
+    const timeDifference = parseWindowMinutes(left.window) - parseWindowMinutes(right.window);
+    return timeDifference || left.id.localeCompare(right.id);
+  });
+
+  const jobs: Job[] = orderedOrders.map((workOrder, index) => {
+    const criticality = Math.max(0.55, 1 - index * 0.075);
+    const candidates = recipients
+      .filter(technician => evaluateRecoveryConstraints(state, workOrder, technician).eligible)
+      .map(technician => candidateMetrics(technician, index));
+    return {
+      ...workOrder,
+      promiseCriticality: criticality,
+      callbackCost: 0.55 + criticality * 0.45,
+      candidates,
+    };
+  });
+
+  const rejectedCandidates = orderedOrders.reduce((sum, workOrder) => sum + recipients.filter(
+    technician => !evaluateRecoveryConstraints(state, workOrder, technician).eligible,
+  ).length, 0);
+
+  return { jobs, recipients, rejectedCandidates };
+}
+
+function projectedLoads(
+  choices: Array<Candidate | null>,
+  recipients: RecoveryTechnicianInput[],
+) {
+  const assignmentCounts = Object.fromEntries(recipients.map(technician => [technician.id, 0])) as Record<string, number>;
+  for (const choice of choices) {
+    if (choice) assignmentCounts[choice.technicianId] = (assignmentCounts[choice.technicianId] ?? 0) + 1;
+  }
+  return recipients.map(technician => {
+    const capacity = Math.max(1, technician.routeCapacity);
+    return (technician.activeStops + (assignmentCounts[technician.id] ?? 0)) / capacity;
+  });
+}
+
+function planMetrics(
+  choices: Array<Candidate | null>,
+  jobs: Job[],
+  recipients: RecoveryTechnicianInput[],
+): RawMetrics {
   let protectedPromiseValue = 0;
   let workflowMovement = 0;
   let overtime = 0;
@@ -212,16 +236,17 @@ function planMetrics(choices: Array<Candidate | null>): RawMetrics {
     workflowMovement += choice.travelMiles + choice.scheduleDisplacementMinutes / 3;
     overtime += choice.overtimeHours;
     stabilityCost += choice.scheduleDisplacementMinutes;
-    technicianHours[choice.technicianId] += job.laborHours;
   });
 
   const totalPromiseValue = jobs.reduce((sum, job) => sum + job.promiseCriticality, 0);
-  const utilizations = Object.keys(capacities).map(id => technicianHours[id] / availableHours[id]);
-  const averageUtilization = utilizations.reduce((sum, value) => sum + value, 0) / utilizations.length;
-  const loadVariance = utilizations.reduce((sum, value) => sum + (value - averageUtilization) ** 2, 0) / utilizations.length;
+  const loads = projectedLoads(choices, recipients);
+  const averageLoad = loads.length ? loads.reduce((sum, value) => sum + value, 0) / loads.length : 0;
+  const loadVariance = loads.length
+    ? loads.reduce((sum, value) => sum + (value - averageLoad) ** 2, 0) / loads.length
+    : 0;
 
   return {
-    sla: protectedPromiseValue / totalPromiseValue,
+    sla: totalPromiseValue > 0 ? protectedPromiseValue / totalPromiseValue : 0,
     travel: workflowMovement,
     load: Math.sqrt(loadVariance),
     overtime,
@@ -229,7 +254,7 @@ function planMetrics(choices: Array<Candidate | null>): RawMetrics {
   };
 }
 
-function normalizeMetrics(plans: Array<{ choices: Array<Candidate | null>; metrics: RawMetrics }>) {
+function normalizeMetrics(plans: Array<SearchPlan & { metrics: RawMetrics }>) {
   const ranges = Object.fromEntries(objectiveKeys.map(key => {
     const values = plans.map(plan => plan.metrics[key]);
     return [key, { min: Math.min(...values), max: Math.max(...values) }];
@@ -257,23 +282,26 @@ function planKey(choices: Array<Candidate | null>) {
   return choices.map(choice => choice?.technicianId ?? "RESCHEDULED").join("|");
 }
 
-export function optimizeRecovery(inputWeights: PolicyWeights): RecoveryPlan {
+export function optimizeRecovery(
+  state: RecoveryOptimizationState,
+  inputWeights: PolicyWeights,
+): RecoveryPlan {
+  if (state.workOrders.length === 0) throw new Error("No affected repair orders are available for recovery");
   const weights = sanitizeWeights(inputWeights);
-  const eligible = jobs.map(job => job.candidates.filter(isEligible));
-  const rejectedCandidates = jobs.reduce((sum, job) => sum + job.candidates.filter(value => !isEligible(value)).length, 0);
-  const options = eligible.map(candidates => [null, ...candidates] as Array<Candidate | null>);
+  const { jobs, recipients, rejectedCandidates } = buildJobs(state);
+  if (recipients.length === 0) throw new Error("No receiving technicians are available for recovery");
+
+  const capacities = Object.fromEntries(recipients.map(technician => [technician.id, remainingCapacity(technician)])) as Record<string, number>;
+  const options = jobs.map(job => [null, ...job.candidates] as Array<Candidate | null>);
   const assignments = new Array<Candidate | null>(jobs.length).fill(null);
-  const loads: Record<string, number> = Object.fromEntries(Object.keys(capacities).map(id => [id, 0]));
-  const feasiblePlans: Array<{ choices: Array<Candidate | null>; metrics: RawMetrics }> = [];
+  const loads = Object.fromEntries(recipients.map(technician => [technician.id, 0])) as Record<string, number>;
+  const searchedPlans: SearchPlan[] = [];
   let scenariosEvaluated = 0;
 
   const search = (index: number, assignedCount: number) => {
     if (index === jobs.length) {
       scenariosEvaluated += 1;
-      if (assignedCount === requiredAssignments) {
-        const choices = [...assignments];
-        feasiblePlans.push({ choices, metrics: planMetrics(choices) });
-      }
+      searchedPlans.push({ choices: [...assignments], assignedCount });
       return;
     }
 
@@ -287,6 +315,10 @@ export function optimizeRecovery(inputWeights: PolicyWeights): RecoveryPlan {
   };
 
   search(0, 0);
+  const maximumAssignments = Math.max(...searchedPlans.map(plan => plan.assignedCount));
+  const feasiblePlans = searchedPlans
+    .filter(plan => plan.assignedCount === maximumAssignments)
+    .map(plan => ({ ...plan, metrics: planMetrics(plan.choices, jobs, recipients) }));
   if (feasiblePlans.length === 0) throw new Error("No recovery plan satisfies the hard constraints");
 
   const evaluated: EvaluatedPlan[] = normalizeMetrics(feasiblePlans).map(plan => ({
@@ -319,18 +351,17 @@ export function optimizeRecovery(inputWeights: PolicyWeights): RecoveryPlan {
   }, 0) / Math.max(0.01, assignedPromiseWeight);
   const scoreMargin = best.score - (evaluated[1]?.score ?? best.score);
   const scheduleDisplacementMinutes = assigned.reduce((sum, item) => sum + item.choice.scheduleDisplacementMinutes, 0);
-  const technicianHours: Record<string, number> = Object.fromEntries(Object.keys(capacities).map(id => [id, 0]));
-  assigned.forEach(item => {
-    technicianHours[item.choice.technicianId] += item.job.laborHours;
-  });
-  const hourValues = Object.values(technicianHours);
+  const projected = projectedLoads(best.choices, recipients).map(value => value * 100);
+  const projectedLoadSpreadPoints = projected.length ? Math.max(...projected) - Math.min(...projected) : 0;
 
   return {
     assignments: assigned.map(item => ({
       jobId: item.job.id,
       window: item.job.window,
       job: `${item.job.serviceOperation} · ${item.job.vehicle}`,
-      from: "Jonah Reed",
+      fromTechnicianId: state.disruptedTechnicianId,
+      toTechnicianId: item.choice.technicianId,
+      from: state.disruptedTechnicianName,
       to: item.choice.technicianName,
       impactMinutes: item.choice.delayMinutes,
       travelMiles: item.choice.travelMiles,
@@ -349,46 +380,51 @@ export function optimizeRecovery(inputWeights: PolicyWeights): RecoveryPlan {
     decisionEvidence: {
       callbacks: rescheduled.length,
       scheduleDisplacementMinutes,
-      flaggedHoursSpread: round(Math.max(...hourValues) - Math.min(...hourValues)),
+      projectedLoadSpreadPoints: round(projectedLoadSpreadPoints),
     },
   };
 }
 
-export function validateRecoveryPlan(plan: Pick<RecoveryPlan, "assignments" | "rescheduled">) {
+export function validateRecoveryPlan(
+  state: RecoveryOptimizationState,
+  plan: Pick<RecoveryPlan, "assignments" | "rescheduled">,
+) {
   const errors: string[] = [];
   const seen = new Set<string>();
-  const technicianLoads: Record<string, number> = Object.fromEntries(Object.keys(capacities).map(id => [id, 0]));
+  const recipients = state.technicians.filter(technician => technician.id !== state.disruptedTechnicianId);
+  const capacityById = Object.fromEntries(recipients.map(technician => [technician.id, remainingCapacity(technician)])) as Record<string, number>;
+  const technicianLoads = Object.fromEntries(recipients.map(technician => [technician.id, 0])) as Record<string, number>;
+  const workOrders = new Map(state.workOrders.map(workOrder => [workOrder.id, workOrder]));
+  const technicians = new Map(recipients.map(technician => [technician.id, technician]));
 
   for (const assignment of plan.assignments) {
     if (seen.has(assignment.jobId)) errors.push(`Duplicate repair order ${assignment.jobId}`);
     seen.add(assignment.jobId);
-    const job = jobs.find(value => value.id === assignment.jobId);
-    if (!job) {
+    const workOrder = workOrders.get(assignment.jobId);
+    const technician = technicians.get(assignment.toTechnicianId);
+    if (!workOrder) {
       errors.push(`Unknown repair order ${assignment.jobId}`);
       continue;
     }
-    const selectedCandidate = job.candidates.find(value => value.technicianName === assignment.to);
-    if (!selectedCandidate || !isEligible(selectedCandidate)) {
+    if (!technician || !evaluateRecoveryConstraints(state, workOrder, technician).eligible) {
       errors.push(`Ineligible assignment for ${assignment.jobId}`);
       continue;
     }
-    technicianLoads[selectedCandidate.technicianId] += 1;
-    if (assignment.impactMinutes !== selectedCandidate.delayMinutes || assignment.travelMiles !== selectedCandidate.travelMiles || assignment.overtimeHours !== selectedCandidate.overtimeHours) {
-      errors.push(`Assignment evidence does not match the candidate for ${assignment.jobId}`);
-    }
+    technicianLoads[technician.id] += 1;
   }
 
   for (const item of plan.rescheduled) {
     if (seen.has(item.id)) errors.push(`Duplicate repair order ${item.id}`);
     seen.add(item.id);
-    if (!jobs.some(job => job.id === item.id)) errors.push(`Unknown repair order ${item.id}`);
+    if (!workOrders.has(item.id)) errors.push(`Unknown repair order ${item.id}`);
   }
 
   for (const [technicianId, load] of Object.entries(technicianLoads)) {
-    if (load > capacities[technicianId]) errors.push(`${technicianId} exceeds capacity`);
+    if (load > capacityById[technicianId]) errors.push(`${technicianId} exceeds capacity`);
   }
-  if (plan.assignments.length !== requiredAssignments) errors.push(`Expected ${requiredAssignments} assignments`);
-  if (seen.size !== jobs.length || jobs.some(job => !seen.has(job.id))) errors.push("Plan does not account for every affected repair order");
+  if (seen.size !== state.workOrders.length || state.workOrders.some(workOrder => !seen.has(workOrder.id))) {
+    errors.push("Plan does not account for every affected repair order");
+  }
 
   return { valid: errors.length === 0, errors };
 }
