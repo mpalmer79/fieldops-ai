@@ -29,10 +29,10 @@ export const assistantPrompts = [
 
 export const welcomeReply: AssistantReply = {
   intent: "overview",
-  title: "FieldOps AI Assistant",
+  title: "FieldOps Context Assistant",
   paragraphs: [
     "I can explain the product, recovery logic, workspaces, architecture, governance model, and the professional background behind the project.",
-    "This assistant uses a curated local knowledge base in the application. It does not send your question to Claude or another external model.",
+    "I am a deterministic in-app knowledge assistant backed by curated FieldOps content. I do not send your question to Claude, OpenAI, or another external model.",
   ],
 };
 
@@ -218,7 +218,7 @@ export function resolveAssistantResponse(message: string, pathname = ""): Assist
     title: "I can help with the FieldOps portfolio system",
     paragraphs: [
       "I am intentionally scoped to the product and its portfolio context. Ask me about recovery logic, service operations, capacity planning, diagnostics, AgentOps, architecture, governance, or Michael Palmer.",
-      "This response is generated from the local FieldOps knowledge set in the application. No prompt is sent to Claude or another external model.",
+      "This response comes from the deterministic FieldOps knowledge set built into the application. No prompt is sent to Claude, OpenAI, or another external model.",
     ],
   };
 }
