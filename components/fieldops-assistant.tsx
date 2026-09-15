@@ -122,11 +122,11 @@ export function FieldOpsAssistant() {
             <div className={styles.headerIdentity}>
               <span className={styles.headerIcon}><Sparkles aria-hidden="true" /></span>
               <div>
-                <strong id="fieldops-assistant-title">FieldOps AI Assistant</strong>
-                <span><i /> LOCAL KNOWLEDGE MODE</span>
+                <strong id="fieldops-assistant-title">FieldOps Context Assistant</strong>
+                <span><i /> CURATED LOCAL KNOWLEDGE</span>
               </div>
             </div>
-            <button type="button" className={styles.closeButton} onClick={() => setOpen(false)} aria-label="Close FieldOps assistant">
+            <button type="button" className={styles.closeButton} onClick={() => setOpen(false)} aria-label="Close FieldOps context assistant">
               <X aria-hidden="true" />
             </button>
           </header>
@@ -154,7 +154,7 @@ export function FieldOpsAssistant() {
           </div>
 
           <form className={styles.composer} onSubmit={handleSubmit}>
-            <label htmlFor="fieldops-assistant-input" className={styles.srOnly}>Ask the FieldOps AI Assistant</label>
+            <label htmlFor="fieldops-assistant-input" className={styles.srOnly}>Ask the FieldOps Context Assistant</label>
             <input
               ref={inputRef}
               id="fieldops-assistant-input"
@@ -168,7 +168,7 @@ export function FieldOpsAssistant() {
               <Send aria-hidden="true" />
             </button>
           </form>
-          <footer className={styles.panelFooter}>Curated in-app knowledge. No external LLM request.</footer>
+          <footer className={styles.panelFooter}>Deterministic in-app knowledge. No external model request.</footer>
         </section>
       )}
 
@@ -176,7 +176,7 @@ export function FieldOpsAssistant() {
         type="button"
         className={`${styles.launcher} ${open ? styles.launcherOpen : ""}`}
         onClick={() => setOpen((current) => !current)}
-        aria-label={open ? "Close FieldOps AI Assistant" : "Open FieldOps AI Assistant"}
+        aria-label={open ? "Close FieldOps Context Assistant" : "Open FieldOps Context Assistant"}
         aria-expanded={open}
       >
         <MessageCircleMore aria-hidden="true" />

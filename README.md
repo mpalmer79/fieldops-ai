@@ -1,188 +1,254 @@
-# FieldOps AI
+# FieldOps AI | Automotive Service Operations
 
-FieldOps AI is an agentic automotive service-operations platform for constraint-based shop loading, same-day repair-order recovery, human approval, policy optimization, and auditable operational decisions.
+[![Quality](https://github.com/mpalmer79/fieldops-ai/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/mpalmer79/fieldops-ai/actions/workflows/quality.yml)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Railway-336791)
+![Portfolio Prototype](https://img.shields.io/badge/status-portfolio%20prototype-138b76)
 
 **Live application:** [fieldops-ai.up.railway.app](https://fieldops-ai.up.railway.app/)
 
-## The operational problem
+FieldOps AI is a production-oriented portfolio prototype for dealership service operations. It models how a service department can recover from technician callouts, capacity failures, diagnostic overruns, and customer-promise risk without silently violating operating constraints.
 
-Dealership service plans deteriorate when technicians become unavailable, diagnostic work expands, parts are delayed, or urgent repair orders arrive. A shop foreman or service manager must quickly determine which promised completion times can be preserved, which technicians are qualified, and which recovery plan creates the lowest operational cost without violating customer commitments.
+The core idea is simple: **detect what changed, remove impossible recovery options, evaluate feasible alternatives, require human approval where the decision is consequential, and preserve an auditable record of what happened.**
 
-FieldOps AI demonstrates how a bounded decision system can evaluate those tradeoffs while keeping consequential actions under human control.
+![FieldOps AI product overview](docs/fieldops-product-overview.svg)
 
-## Current capabilities
+## Why this project exists
 
-- Live service command center with repair-order, technician, promise-time, shop-efficiency, and risk indicators
-- Deterministic recovery optimizer that evaluates technician reassignment combinations
-- Hard constraints for OEM certification, bay and equipment access, parts, shift availability, and technician capacity
-- Weighted business objectives for promise-time protection, workflow movement, workload, overtime, and schedule stability
-- Dynamic policy controls that recalculate the recommended plan
-- Human approval boundary for customer rescheduling and other consequential actions
-- Explainable recovery plans with rejected candidates, assignment impact, and decision criteria
-- Authenticated operator roles for technician, dispatcher, supervisor, and admin actions
-- Durable PostgreSQL state for technicians, work orders, policies, disruptions, plans, assignments, and audits
-- Idempotent event ingestion and optimistic concurrency checks for policies and plan transitions
-- Guarded plan lifecycle with approval, execution, rejection, and compensating rollback
-- Immutable decision stream backed by PostgreSQL triggers that reject audit updates and deletes
-- AgentOps control tower for fleet health, cost, latency, escalation, and incident monitoring
-- Versioned agent release pipeline with evaluation, shadow, production, and rollback stages
-- Five enforced release gates covering task success, policy compliance, hallucinations, tool accuracy, and latency
-- Immutable evaluation runs with deterministic 500-case suites and categorized failure evidence
-- Server-enforced promotion controls that block unsafe agent versions
-- Evidence-grounded technician diagnostics with ranked hypotheses, cited sources, safety acknowledgement, and parts availability
-- Versioned diagnostic runs, immutable tool execution, escalation, and first-time-fix outcome capture
-- Versioned 14-day demand forecasts with backtest WAPE, bias, prediction-interval coverage, and skill-level capacity risk
-- Capacity scenarios for demand, technician availability, overtime, and cross-trained staffing with explicit supervisor approval
-- Enterprise-scale benchmark suite across 1,000 to 100,000 synthetic work orders
-- Measured constraint-kernel throughput and p95 shard latency with deterministic replay verification
-- Five regression gates for profile completion, determinism, hard constraints, throughput, and tail latency
-- Durable benchmark history, baseline comparisons, audit evidence, and downloadable CSV reports
-- Structured browser tools for shop recovery, governance, vehicle diagnostics, forecasting, capacity planning, and benchmark execution
-- Responsive desktop and mobile interface
-- Nine addressable App Router workspaces with browser history and deep-link support
-- Isolated public-demo workspaces with stable session identity and supervisor permissions
-- Automated optimizer, benchmark, accessibility, route, API, and interaction tests enforced in CI
+Dealership service plans start degrading as soon as reality diverges from the schedule. A technician becomes unavailable. Diagnostic work expands. Parts are delayed. An urgent repair order arrives. A manager then has to answer several questions at once:
+
+- Which customer promises are now at risk?
+- Which technicians are actually qualified to receive the work?
+- Which assignments violate capacity, certification, equipment, parts, or shift constraints?
+- Which feasible plan creates the best operational outcome?
+- Which actions can be automated and which require manager approval?
+- Can the resulting decision be explained, audited, and rolled back?
+
+FieldOps AI turns that decision problem into a bounded operating workflow instead of a generic chatbot experience.
+
+## What makes it different
+
+This project is intentionally broader than an LLM wrapper. The primary system behavior is implemented through persisted operational state, deterministic optimization, explicit constraints, approval contracts, and auditable lifecycle transitions.
+
+| Area | What is demonstrated |
+| --- | --- |
+| Recovery optimization | Exhaustive bounded search across technician reassignment combinations with hard-constraint elimination before scoring |
+| Human control | Explicit manager approval before consequential repair-order execution |
+| Explainability | Rejected candidates, plan impact, policy weights, assignment evidence, and decision-state history |
+| Persistent operations | PostgreSQL-backed technicians, work orders, policies, disruptions, plans, assignments, diagnostics, capacity scenarios, benchmarks, and audits |
+| AgentOps | Evaluation gates, shadow and production states, incidents, inference cost, promotion controls, and rollback |
+| Diagnostics | Evidence-grounded hypotheses, verification paths, parts availability, safety acknowledgement, escalation, and first-time-fix outcome capture |
+| Capacity planning | Versioned 14-day forecasts, backtest WAPE, bias, interval coverage, skill-level staffing risk, and bounded planning scenarios |
+| Simulation | Deterministic benchmark workloads from 1,000 to 100,000 repair orders with throughput, latency, replay, and regression evidence |
+| Context assistant | A deterministic in-app knowledge assistant for product, architecture, workspace, and creator context. It does not call Claude, OpenAI, or another external model. |
+
+## Product tour
+
+FieldOps AI is organized into nine addressable workspaces:
+
+1. **Service Command** - model a technician disruption, inspect customer exposure, validate recovery constraints, review the recommended plan, approve execution, and inspect audit evidence.
+2. **Shop Board** - see bay occupancy, repair-order flow, and customer-promise risk in one operating view.
+3. **Repair Orders** - trace promise progression, work state, and the next operational action.
+4. **Technicians** - compare workload, availability, certification coverage, and assignment risk.
+5. **Performance** - track promise attainment, shop efficiency, cycle time, comeback rate, and recovery impact.
+6. **Capacity Planning** - inspect the 14-day demand forecast, uncertainty, and skill-level capacity risk before the schedule breaks.
+7. **Simulation Lab** - stress the recovery engine across dealership-scale workload profiles and verify release-readiness gates.
+8. **Diagnostic Copilot** - work through a synthetic vehicle case using evidence, hypotheses, verification paths, safety controls, and parts context.
+9. **AgentOps** - evaluate, promote, monitor, and roll back operational agents under explicit release gates.
+
+A persistent **FieldOps Context Assistant** is available throughout the application. It answers from curated local project knowledge and is deliberately deterministic so a portfolio reviewer gets consistent product, architecture, and creator context without an external model dependency.
 
 ## Demonstration workflow
 
-1. Select **Run disruption** to make technician `T-274` unavailable.
-2. Observe the resulting changes to promise-time attainment, shop efficiency, and at-risk repair orders.
-3. Open **Review recovery plan**.
-4. Inspect proposed assignments, customer impact, hard-constraint validation, and solver evidence.
-5. Select **Approve and execute** to apply five repair-order reassignments and queue two advisor callbacks.
-6. Inspect the persisted audit events in the decision stream.
-7. Inspect the compensating rollback control, which remains restricted to an administrator outside the public supervisor demo.
-8. Open **Policy controls**, change an operational priority, and save a new version for the next recovery evaluation.
-9. Select **AgentOps** in the navigation to inspect the operational AI fleet.
-10. Compare the Shop Load Agent and Promise Recovery Agent candidates, run their evaluation suites, and inspect the failed gates.
-11. Inspect the shadow, production, and rollback gates. Promotion remains deliberately restricted to an administrator outside the public supervisor demo.
-12. Select **Diagnostic Copilot** to inspect the linked vehicle case, evidence, and parts inventory.
-13. Acknowledge the safety boundary, accept a verification path, and record the technician outcome.
-14. Select **Capacity Planning** to inspect the 14-day demand forecast, uncertainty ceiling, and skill-level staffing risk.
-15. Stress demand and availability, evaluate a capacity scenario, and approve the bounded workforce-planning handoff.
-16. Select **Simulation Lab** to focus a dealership workload profile, inspect the visual constraint screen, and verify the latest release-readiness gates.
-17. Run a new benchmark suite, compare it with the previous baseline, and export the persisted CSV evidence report.
+A reviewer can understand the main operating loop in a few minutes:
 
-Workspace provenance is explicit in the interface: Service Command and Technicians use live persisted state, Shop Board and Repair Orders are illustrative reference views, Performance combines a live recovery projection with illustrative trends, and the remaining workspaces identify modeled, measured, reference, or demo data at the point of use.
+1. Open **Service Command**.
+2. Select **Run disruption** to make technician `T-274` unavailable.
+3. Observe the resulting customer-promise and capacity exposure.
+4. Inspect hard-constraint evidence and the recommended recovery plan.
+5. Open **Review recovery plan**.
+6. Approve and execute the persisted plan.
+7. Inspect the resulting repair-order changes and audit events.
+8. Open **Policy controls**, change an operating priority, and save a new policy version.
+9. Visit **AgentOps**, **Diagnostic Copilot**, **Capacity Planning**, and **Simulation Lab** to inspect the broader governance and decision-support architecture.
+10. Open the **FieldOps Context Assistant** and ask who built the project for direct links to the creator's LinkedIn, GitHub, and portfolio.
 
-## Optimization model
+## Recovery model
 
-The current scenario contains seven affected repair orders and three eligible receiving technicians. The solver performs a bounded exhaustive search across the candidate assignment space.
+The reference disruption contains seven affected repair orders and three eligible receiving technicians. The server-side optimizer performs a bounded exhaustive search across candidate assignments.
 
-Under the default policy, it enumerates capacity-valid combinations, excludes ineligible candidates before scoring, normalizes every objective to a comparable 0–100 scale, and selects the highest-scoring feasible plan. Automated policy-sensitivity tests prove that materially different priorities select materially different plans.
+The sequence is deliberate:
 
-Hard constraints are never converted into weighted preferences. An assignment that violates OEM certification, bay or equipment access, parts availability, shift availability, or technician capacity is not eligible for scoring.
+```mermaid
+flowchart LR
+    A[Operational disruption] --> B[Identify exposed ROs]
+    B --> C[Generate candidate assignments]
+    C --> D[Reject hard-constraint violations]
+    D --> E[Score feasible plans]
+    E --> F[Manager review]
+    F --> G[Execute or reject]
+    G --> H[Audit outcome]
+    H --> I[Rollback if authorized]
+```
 
-## Enterprise benchmark model
+Hard constraints are never converted into preferences. A plan that violates OEM certification, bay or equipment access, parts availability, shift availability, or technician capacity is removed before business-objective scoring.
 
-The benchmark runs the server-side hard-constraint and scoring kernel against four deterministic synthetic workload profiles. It compares forward, replay, and reverse traversal checksums, verifies that a different seed produces different evidence, and measures each profile across repeated timed runs using a monotonic high-resolution clock.
-
-| Profile | Repair orders | Technicians | Rooftops |
-|---|---:|---:|---:|
-| Single rooftop | 1,000 | 80 | 4 |
-| Regional dealer group | 10,000 | 500 | 12 |
-| Enterprise dealer group | 50,000 | 2,500 | 30 |
-| Peak service load | 100,000 | 5,000 | 50 |
-
-The suite passes only when all profiles complete, deterministic replays match, positive and negative hard-constraint fixtures behave correctly, throughput remains above 500,000 evaluations per second, and p95 latency for a 10,000-record shard stays at or below 25 milliseconds. After a successful run exists, regression gates also compare the result with the same visitor workspace's latest compatible baseline.
-
-These measurements cover the bounded computation kernel only. They exclude live routing providers, network calls, database ingestion, browser rendering, and end-to-end production traffic, so they are regression evidence rather than a production capacity guarantee.
-
-The remaining feasible plans are scored using normalized policy weights:
+The remaining feasible plans use normalized policy weights:
 
 | Objective | Default weight |
-|---|---:|
+| --- | ---: |
 | Promise-time protection | 35% |
 | Workflow movement | 25% |
 | Technician load | 20% |
 | Overtime reduction | 15% |
 | Schedule stability | 5% |
 
-## Decision flow
+## Enterprise benchmark model
 
-```mermaid
-flowchart TD
-    A[Technician call-out] --> B[Generate RO assignments]
-    B --> C[Remove hard-constraint violations]
-    C --> D[Evaluate feasible plans]
-    D --> E[Score business objectives]
-    E --> F{Approval required?}
-    F -->|Yes| G[Service manager review]
-    F -->|No| H[Bounded automatic action]
-    G --> I[Execute or reject]
-    H --> I
-    I --> J[Record decision outcome]
-```
+The benchmark suite runs the server-side constraint and scoring kernel against deterministic synthetic workload profiles and verifies replay consistency, positive and negative constraint fixtures, throughput, and tail latency.
+
+| Profile | Repair orders | Technicians | Rooftops |
+| --- | ---: | ---: | ---: |
+| Single rooftop | 1,000 | 80 | 4 |
+| Regional dealer group | 10,000 | 500 | 12 |
+| Enterprise dealer group | 50,000 | 2,500 | 30 |
+| Peak service load | 100,000 | 5,000 | 50 |
+
+The regression suite requires all profiles to complete, deterministic replays to match, hard-constraint fixtures to behave correctly, throughput to remain above 500,000 evaluations per second, and p95 latency for a 10,000-record shard to remain at or below 25 milliseconds.
+
+These measurements cover the bounded computation kernel only. They do not claim end-to-end production capacity for network traffic, browser rendering, database ingestion, or external integrations.
 
 ## Technology
 
 - Next.js 16 and React 19
 - TypeScript
-- Standard Next.js Node.js runtime on the Railway deployment branch
+- PostgreSQL on Railway
+- Drizzle-generated forward-only migrations
 - Tailwind CSS
-- Radix UI and shadcn-compatible interface primitives
+- Radix UI and shadcn-compatible primitives
 - Lucide icons
 - WebMCP-compatible structured browser actions
-- Railway PostgreSQL with generated, forward-only Drizzle migrations
+- Vitest and Testing Library
+- GitHub Actions quality gate
+
+## Architecture
+
+```text
+Browser
+  |
+  |-- Public landing page
+  |-- Nine operational workspaces
+  |-- FieldOps Context Assistant
+  |
+Next.js application
+  |
+  |-- Service recovery APIs
+  |-- Policy lifecycle APIs
+  |-- Recovery plan transitions
+  |-- AgentOps evaluation and promotion
+  |-- Diagnostic workflow APIs
+  |-- Forecast and capacity APIs
+  |-- Benchmark APIs
+  |
+Domain layer
+  |
+  |-- Constraint validation
+  |-- Recovery optimizer
+  |-- Policy scoring
+  |-- Diagnostics logic
+  |-- Forecast and benchmark kernels
+  |
+PostgreSQL
+  |
+  |-- Operational state
+  |-- Versioned policies and plans
+  |-- Audit events
+  |-- Diagnostics
+  |-- Capacity scenarios
+  |-- Benchmark evidence
+```
+
+## Data provenance
+
+The interface distinguishes live persisted demo state from illustrative or modeled portfolio data.
+
+- **Service Command and Technicians** use persisted application state.
+- **Shop Board and Repair Orders** are illustrative reference views built around the service-operations model.
+- **Performance** combines live recovery projection with illustrative trend data.
+- **Capacity Planning** uses modeled forecasting and planning data.
+- **Simulation Lab** reports measured benchmark results from the server-side test kernel.
+- **Diagnostic Copilot** uses a synthetic vehicle service case.
+- **AgentOps** demonstrates governed operational-agent lifecycle behavior.
+
+Public visitors receive isolated cookie-backed demo workspaces so their mutations do not share operational state with other visitors.
+
+## Engineering boundaries
+
+This is a **portfolio prototype**, not a connected dealership production system.
+
+The optimization, persistence, lifecycle controls, benchmark logic, policy evaluation, and audit behavior are implemented. External dealer systems remain simulated boundaries, including:
+
+- DMS integration
+- technician timekeeping
+- parts catalog and availability feeds
+- OEM service-information providers
+- customer messaging
+- live scheduling and appointment systems
+
+Execution updates durable repair-order state inside the demo workspace. Rollback is implemented as an explicit compensating transaction with its own audit evidence.
+
+## Quality gates
+
+The repository quality workflow blocks release work unless all of the following pass:
+
+- ESLint
+- TypeScript type checking
+- unit and interaction tests
+- production build
+
+The test suite covers optimizer behavior, benchmark determinism, route contracts, accessibility checks, assistant knowledge behavior, landing-page interaction, and the Service Command recovery flow.
 
 ## Project structure
 
 ```text
 app/
-  control-room/[workspace] Addressable operational workspace routes
-  control-room/layout.tsx  Route-scoped operational CSS bundle
-  control-room/_components Shared service command shell and workflows
-  globals.css              Minimal document reset shared by all routes
-  control-room-structure.css Structural layout primitives for operational views
-  control-room.css         Dark operational workspace design system
-  landing.module.css       Scoped public landing-page presentation
-components/ui/             Accessible interface primitives
-lib/
-  dispatch-optimizer.ts    Constraints, search, scoring, and plan output
-  server/                  Authentication, persistence, lifecycle, and audit services
-app/api/
-  operations/              Durable command-center snapshot
-  disruptions/             Idempotent operational event ingestion
-  policy/                  Version-guarded policy updates
-  recovery-plans/          Role-guarded plan transitions
-  agentops/                Fleet snapshot, evaluations, promotions, and rollback
-  diagnostics/             Grounded analysis, technician decisions, escalation, and outcomes
-  capacity/                Forecast generation, scenario evaluation, and capacity-plan approval
-  benchmarks/              Scale-suite execution and downloadable benchmark evidence
+  control-room/[workspace]   Addressable operational workspaces
+  api/                       Recovery, policy, AgentOps, diagnostics, capacity, and benchmark endpoints
 components/
-  agentops-control-tower.tsx  Agent fleet governance and release interface
-  technician-diagnostic-copilot.tsx  Evidence-grounded vehicle diagnostic workflow
-  capacity-planning.tsx    Demand forecasting and capacity scenario workspace
-  simulation-benchmark.tsx Enterprise benchmark, regression gates, and report workspace
+  service-recovery-command.tsx
+  shop-board.tsx
+  repair-orders-board.tsx
+  technician-command-center.tsx
+  performance-command-center.tsx
+  capacity-planning.tsx
+  simulation-benchmark.tsx
+  technician-diagnostic-copilot.tsx
+  agentops-control-tower.tsx
+  fieldops-assistant.tsx
+lib/
+  dispatch-optimizer.ts
+  fieldops-assistant.ts
+  server/
 db/
-  schema.ts                Indexed operational data model
-drizzle/                   Generated schema migration and metadata
-drizzle-postgres/          PostgreSQL migration set for Railway
-public/
-  favicon.svg              FieldOps AI application icon
-railway.json               Railway build, migration, health, and runtime policy
-.github/workflows/         Lint, type, test, and production-build quality gate
-tests/                     Domain, benchmark, route, accessibility, and UI smoke tests
+  schema.ts
+drizzle-postgres/
+tests/
+docs/
+  fieldops-product-overview.svg
 ```
 
-## Engineering boundaries
+## About the builder
 
-The current version is a portfolio prototype using synthetic operational data. The optimization and benchmark logic is real and deterministic and executes on the server. The browser also computes a non-authoritative policy preview before saving. Public visitors receive separate cookie-backed demo workspaces, so their mutations, policies, plans, diagnostics, capacity scenarios, benchmarks, and agent evaluations do not share operational state.
+**Michael Palmer**  
+AI Solutions Engineer | Applied AI, LLM Systems, Workflow Automation | Full-Stack Engineering
 
-The implementation demonstrates production-oriented controls, but it is not connected to a live dealer management system. External DMS, technician timekeeping, parts-catalog, OEM-service-information, and customer-messaging integrations remain simulated boundaries. Execution updates durable repair-order state, while rollback restores both repair-order assignments and the disrupted technician's prior status through an explicit compensating transaction with its own audit event.
+Michael combines more than 25 years of automotive retail and dealership operations experience with computer science, software engineering, and applied AI. FieldOps AI is designed around that overlap: real dealership operating constraints expressed as software, decision logic, governance, and measurable system behavior.
 
-## Roadmap
-
-- [x] Automotive service command interface
-- [x] Disruption and recovery workflow
-- [x] Constraint-based optimization
-- [x] Configurable business policies
-- [x] Persistent operational backend and event pipeline
-- [x] AgentOps monitoring and evaluation control tower
-- [x] Technician diagnostic copilot
-- [x] Demand forecasting and capacity planning
-- [x] Enterprise-scale simulation and benchmark report
+- [LinkedIn](https://linkedin.com/in/mpalmer1234)
+- [GitHub](https://github.com/mpalmer79)
+- [Portfolio](https://mpalmer79.github.io/)
 
 ## Portfolio focus
 
-This project is designed to demonstrate more than AI-assisted user interaction. Its focus is operational decision architecture: translating a business disruption into constrained alternatives, measurable tradeoffs, explicit autonomy limits, human review, and an auditable outcome.
+FieldOps AI demonstrates how an operational AI system can be designed around constraints, persistence, explainability, human authorization, measurable performance, and rollback rather than around an unconstrained chat interface.

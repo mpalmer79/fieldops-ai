@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">FieldOps AI automotive service operations product overview</title>
+  <desc id="desc">A visual overview showing Service Command, Diagnostic Copilot, and AgentOps workspaces connected by a governed decision architecture.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eefaf7"/>
+      <stop offset="0.55" stop-color="#f7fbfb"/>
+      <stop offset="1" stop-color="#e9f5f3"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#138b76"/>
+      <stop offset="1" stop-color="#2db69d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#173f39" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .sans{font-family:Inter,Segoe UI,Arial,sans-serif}.mono{font-family:SFMono-Regular,Consolas,monospace}.ink{fill:#163630}.muted{fill:#69847e}.teal{fill:#138b76}.line{stroke:#c8ded9;stroke-width:2}.card{fill:#ffffff;stroke:#b9d6cf;stroke-width:2}.micro{font-size:15px;font-weight:700;letter-spacing:2px}.small{font-size:18px}.label{font-size:19px;font-weight:700}.metric{font-size:32px;font-weight:800}.title{font-size:54px;font-weight:800;letter-spacing:-1.5px}.section{font-size:27px;font-weight:800}.body{font-size:20px}.pill{font-size:14px;font-weight:800;letter-spacing:1.2px}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1390" cy="110" r="220" fill="#bdeee3" opacity="0.34"/>
+  <circle cx="120" cy="820" r="250" fill="#d7f4ee" opacity="0.5"/>
+
+  <g class="sans">
+    <text x="80" y="86" class="title ink">FieldOps AI</text>
+    <text x="80" y="123" class="body muted">Automotive service recovery with governed operational decision support</text>
+    <g transform="translate(1248 62)">
+      <rect width="272" height="48" rx="24" fill="#ffffff" stroke="#aad2c9" stroke-width="2"/>
+      <circle cx="28" cy="24" r="7" fill="#23a38b"/>
+      <text x="47" y="30" class="pill ink">PORTFOLIO PROTOTYPE</text>
+    </g>
+
+    <g transform="translate(80 178)" filter="url(#shadow)">
+      <rect width="450" height="558" rx="24" class="card"/>
+      <rect width="450" height="8" rx="4" fill="url(#accent)"/>
+      <text x="30" y="54" class="micro teal mono">SERVICE COMMAND</text>
+      <text x="30" y="93" class="section ink">Recover the service day</text>
+      <text x="30" y="124" class="small muted">Technician callout to approved repair-order plan</text>
+
+      <g transform="translate(30 158)">
+        <rect width="390" height="86" rx="14" fill="#eff9f6" stroke="#c0ddd6" stroke-width="2"/>
+        <text x="20" y="30" class="micro muted mono">DISRUPTION INPUT</text>
+        <circle cx="27" cy="57" r="10" fill="#e7745e"/>
+        <text x="48" y="63" class="label ink">T-274 unavailable</text>
+        <text x="255" y="63" class="small muted">7 promises exposed</text>
+      </g>
+
+      <g transform="translate(30 269)">
+        <text x="0" y="0" class="micro muted mono">DECISION PIPELINE</text>
+        <g transform="translate(0 25)">
+          <rect width="390" height="54" rx="12" fill="#153b35"/>
+          <text x="22" y="34" class="label" fill="#ffffff">Detect</text>
+          <text x="112" y="34" class="label" fill="#8ce0cf">→</text>
+          <text x="144" y="34" class="label" fill="#ffffff">Constrain</text>
+          <text x="262" y="34" class="label" fill="#8ce0cf">→</text>
+          <text x="294" y="34" class="label" fill="#ffffff">Optimize</text>
+        </g>
+      </g>
+
+      <g transform="translate(30 380)">
+        <rect width="185" height="92" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="18" y="29" class="small muted">Feasible plan</text>
+        <text x="18" y="68" class="metric ink">5 moves</text>
+        <rect x="205" width="185" height="92" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="223" y="29" class="small muted">Advisor callbacks</text>
+        <text x="223" y="68" class="metric ink">2</text>
+      </g>
+
+      <g transform="translate(30 495)">
+        <rect width="390" height="38" rx="19" fill="#dff5ef"/>
+        <text x="20" y="25" class="pill teal">MANAGER APPROVAL REQUIRED BEFORE EXECUTION</text>
+      </g>
+    </g>
+
+    <g transform="translate(575 178)" filter="url(#shadow)">
+      <rect width="450" height="558" rx="24" class="card"/>
+      <rect width="450" height="8" rx="4" fill="#5daed0"/>
+      <text x="30" y="54" class="micro" fill="#357f9e">DIAGNOSTIC COPILOT</text>
+      <text x="30" y="93" class="section ink">Ground every next step</text>
+      <text x="30" y="124" class="small muted">Evidence, hypotheses, safety, and parts context</text>
+
+      <g transform="translate(30 158)">
+        <rect width="390" height="115" rx="14" fill="#f2f9fb" stroke="#c5dce6" stroke-width="2"/>
+        <text x="20" y="30" class="micro muted mono">VEHICLE CASE</text>
+        <text x="20" y="63" class="label ink">RO-48509 · Genesis G70 2.5T</text>
+        <text x="20" y="91" class="small muted">Intermittent no-start after hot soak</text>
+      </g>
+
+      <g transform="translate(30 300)">
+        <rect width="185" height="103" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="18" y="31" class="small muted">Top hypothesis</text>
+        <text x="18" y="74" class="metric ink">72%</text>
+        <rect x="205" width="185" height="103" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="223" y="31" class="small muted">Evidence coverage</text>
+        <text x="223" y="74" class="metric ink">100%</text>
+      </g>
+
+      <g transform="translate(30 430)">
+        <rect width="390" height="74" rx="13" fill="#fff8eb" stroke="#ead6a6" stroke-width="2"/>
+        <text x="20" y="30" class="micro" fill="#a16d20">SAFETY BOUNDARY</text>
+        <text x="20" y="56" class="label ink">Technician acknowledgement required</text>
+      </g>
+    </g>
+
+    <g transform="translate(1070 178)" filter="url(#shadow)">
+      <rect width="450" height="558" rx="24" class="card"/>
+      <rect width="450" height="8" rx="4" fill="#745fd0"/>
+      <text x="30" y="54" class="micro" fill="#6652bd">AGENTOPS</text>
+      <text x="30" y="93" class="section ink">Govern operational agents</text>
+      <text x="30" y="124" class="small muted">Evaluate, promote, monitor, and roll back</text>
+
+      <g transform="translate(30 158)">
+        <rect width="390" height="86" rx="14" fill="#f7f5ff" stroke="#d6cfee" stroke-width="2"/>
+        <text x="20" y="30" class="micro muted mono">PRODUCTION FLEET</text>
+        <circle cx="27" cy="59" r="9" fill="#32b69a"/>
+        <text x="49" y="65" class="label ink">3 of 4 healthy</text>
+      </g>
+
+      <g transform="translate(30 269)">
+        <rect width="185" height="94" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="18" y="29" class="small muted">Daily decisions</text>
+        <text x="18" y="69" class="metric ink">34K</text>
+        <rect x="205" width="185" height="94" rx="13" fill="#ffffff" stroke="#c3ddd7" stroke-width="2"/>
+        <text x="223" y="29" class="small muted">Open incidents</text>
+        <text x="223" y="69" class="metric ink">2</text>
+      </g>
+
+      <g transform="translate(30 388)">
+        <text x="0" y="0" class="micro muted mono">RELEASE CONTROL</text>
+        <g transform="translate(0 24)">
+          <rect width="390" height="42" rx="10" fill="#eef9f6"/>
+          <text x="18" y="27" class="label ink">Evaluation</text><text x="137" y="27" class="label teal">✓</text>
+          <text x="181" y="27" class="label ink">Shadow</text><text x="263" y="27" class="label teal">✓</text>
+          <text x="305" y="27" class="label ink">Production</text>
+        </g>
+      </g>
+
+      <g transform="translate(30 490)">
+        <rect width="390" height="43" rx="21" fill="#ece9fb"/>
+        <text x="20" y="28" class="pill" fill="#5e4daf">VERSIONED GATES · AUDIT · ROLLBACK</text>
+      </g>
+    </g>
+
+    <g transform="translate(80 785)">
+      <line x1="0" y1="0" x2="1440" y2="0" class="line"/>
+      <text x="0" y="45" class="micro muted mono">SYSTEM CONTRACT</text>
+      <text x="180" y="46" class="body ink">Hard constraints first</text>
+      <text x="430" y="46" class="body muted">•</text>
+      <text x="468" y="46" class="body ink">Human approval for consequential actions</text>
+      <text x="913" y="46" class="body muted">•</text>
+      <text x="951" y="46" class="body ink">Persistent audit evidence</text>
+      <text x="1244" y="46" class="body muted">•</text>
+      <text x="1280" y="46" class="body ink">Rollback</text>
+    </g>
+  </g>
+</svg>
