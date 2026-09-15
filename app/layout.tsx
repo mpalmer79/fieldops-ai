@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./control-room.css";
+import "./control-room-light.css";
 
 export const metadata: Metadata = {
   title: "FieldOps AI | Automotive Service Operations",
