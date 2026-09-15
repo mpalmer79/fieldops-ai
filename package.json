@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
-    "start": "pnpm db:migrate && next start -p ${PORT:-3000}",
+    "start": "next start -p ${PORT:-3000}",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
