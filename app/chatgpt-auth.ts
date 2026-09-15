@@ -18,19 +18,27 @@ const SIGN_IN_PATH = "/signin-with-chatgpt";
 const SIGN_OUT_PATH = "/signout-with-chatgpt";
 const CALLBACK_PATH = "/callback";
 
+const PUBLIC_DEMO_USER: ChatGPTUser = {
+  userId: "fieldops-public-demo",
+  displayName: "Portfolio Operator",
+  email: "demo@fieldops-ai.local",
+  fullName: "Portfolio Operator",
+};
+
+export function isPublicDemoMode() {
+  return process.env.PUBLIC_DEMO_MODE === "true";
+}
+
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
+  // Railway runs as an isolated public portfolio demo. In that mode, do not
+  // inspect or trust OpenAI edge identity headers at all. Those headers are
+  // only authoritative when the app is actually hosted behind the OpenAI edge.
+  if (isPublicDemoMode()) return PUBLIC_DEMO_USER;
+
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
-  if (!userId || !email) {
-    if (process.env.PUBLIC_DEMO_MODE !== "true") return null;
-    return {
-      userId: "fieldops-public-demo",
-      displayName: "Portfolio Operator",
-      email: "demo@fieldops-ai.local",
-      fullName: "Portfolio Operator",
-    };
-  }
+  if (!userId || !email) return null;
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
   const fullName =

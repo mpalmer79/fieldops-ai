@@ -42,13 +42,17 @@ function d1Result<T>(result: QueryResult) {
 }
 
 class PostgresPreparedStatement {
-  constructor(public readonly sql: string, public readonly values: unknown[] = []) {}
+  constructor(
+    public readonly sql: string,
+    public readonly values: unknown[] = [],
+    private readonly client?: Queryable,
+  ) {}
 
   bind(...values: unknown[]) {
-    return new PostgresPreparedStatement(this.sql, values);
+    return new PostgresPreparedStatement(this.sql, values, this.client);
   }
 
-  async execute(client: Queryable = databasePool()) {
+  async execute(client: Queryable = this.client ?? databasePool()) {
     return client.query(postgresSql(this.sql), this.values);
   }
 
@@ -67,11 +71,22 @@ class PostgresPreparedStatement {
 }
 
 class PostgresD1Adapter {
+  constructor(private readonly client?: Queryable) {}
+
   prepare(sql: string) {
-    return new PostgresPreparedStatement(sql);
+    return new PostgresPreparedStatement(sql, [], this.client);
   }
 
   async batch<T = unknown>(statements: D1PreparedStatement[]) {
+    if (this.client) {
+      const results = [];
+      for (const statement of statements) {
+        const prepared = statement as unknown as PostgresPreparedStatement;
+        results.push(d1Result(await prepared.execute(this.client)));
+      }
+      return results as D1Result<T>[];
+    }
+
     const client = await databasePool().connect();
     try {
       await client.query("BEGIN");
@@ -95,4 +110,20 @@ const adapter = new PostgresD1Adapter();
 
 export function db() {
   return adapter as unknown as D1Database;
+}
+
+export async function withDatabaseTransaction<T>(work: (database: D1Database) => Promise<T>) {
+  const client = await databasePool().connect();
+  try {
+    await client.query("BEGIN");
+    const database = new PostgresD1Adapter(client) as unknown as D1Database;
+    const result = await work(database);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
