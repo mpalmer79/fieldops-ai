@@ -1,0 +1,512 @@
+.assistantRoot {
+  position: relative;
+  z-index: 90;
+  font-family: "Aptos", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+.launcher {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 92;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid rgba(21, 105, 91, .6);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #15947d, #0f7566);
+  color: #fff;
+  box-shadow: 0 16px 40px rgba(9, 74, 64, .28), inset 0 1px rgba(255,255,255,.28);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 46px rgba(9, 74, 64, .34), inset 0 1px rgba(255,255,255,.3);
+}
+
+.launcher:focus-visible,
+.closeButton:focus-visible,
+.starters button:focus-visible,
+.composer input:focus-visible,
+.composer button:focus-visible,
+.linkGrid a:focus-visible {
+  outline: 3px solid rgba(21, 148, 125, .25);
+  outline-offset: 3px;
+}
+
+.launcher svg {
+  width: 27px;
+  height: 27px;
+  stroke-width: 1.9;
+}
+
+.launcher > span {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  display: grid;
+  min-width: 23px;
+  height: 20px;
+  place-items: center;
+  padding: 0 5px;
+  border: 2px solid #f7fffd;
+  border-radius: 999px;
+  background: #143c37;
+  color: #fff;
+  font: 800 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .05em;
+}
+
+.launcherOpen {
+  background: linear-gradient(145deg, #143f38, #0d2d28);
+}
+
+.panel {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 72px);
+  z-index: 91;
+  display: flex;
+  width: min(430px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 112px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(62, 119, 109, .3);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(94, 222, 195, .19), transparent 14rem),
+    linear-gradient(155deg, rgba(252,255,254,.985), rgba(235,248,245,.985));
+  color: #18322e;
+  box-shadow: 0 28px 80px rgba(19, 61, 55, .23), 0 8px 24px rgba(19, 61, 55, .12);
+  backdrop-filter: blur(18px);
+  animation: panelIn .18s ease-out;
+}
+
+.panelHeader {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 15px 13px 16px;
+  border-bottom: 1px solid rgba(80, 129, 120, .2);
+  background: rgba(255,255,255,.54);
+}
+
+.headerIdentity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.headerIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(21, 148, 125, .28);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(79, 216, 188, .18), rgba(255,255,255,.72));
+  color: #107b68;
+}
+
+.headerIcon svg {
+  width: 20px;
+}
+
+.headerIdentity > div {
+  min-width: 0;
+}
+
+.headerIdentity strong {
+  display: block;
+  overflow: hidden;
+  color: #16312d;
+  font-size: .92rem;
+  letter-spacing: -.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerIdentity div > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: #4f7b72;
+  font: 700 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+}
+
+.headerIdentity div > span i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #20a68e;
+  box-shadow: 0 0 0 4px rgba(32,166,142,.12);
+}
+
+.closeButton {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #5c7a74;
+}
+
+.closeButton:hover {
+  background: rgba(35, 99, 88, .08);
+  color: #183a34;
+}
+
+.closeButton svg {
+  width: 18px;
+}
+
+.contextBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border-bottom: 1px solid rgba(80, 129, 120, .14);
+  background: rgba(225, 244, 239, .58);
+  color: #52786f;
+  font-size: .7rem;
+}
+
+.contextBar svg {
+  width: 15px;
+  color: #188772;
+}
+
+.starters {
+  padding: 13px 14px 11px;
+  border-bottom: 1px solid rgba(80, 129, 120, .14);
+}
+
+.starters > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #6b8c84;
+  font: 750 .58rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .1em;
+}
+
+.starters > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.starters button {
+  min-height: 54px;
+  padding: 9px 10px;
+  border: 1px solid rgba(53, 121, 108, .2);
+  border-radius: 10px;
+  background: rgba(255,255,255,.62);
+  color: #25473f;
+  font-size: .7rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+
+.starters button:hover {
+  border-color: rgba(21, 148, 125, .42);
+  background: rgba(239, 251, 247, .92);
+  transform: translateY(-1px);
+}
+
+.transcript {
+  flex: 1;
+  min-height: 180px;
+  overflow-y: auto;
+  padding: 15px 14px 6px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(50, 119, 105, .28) transparent;
+}
+
+.message {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+.assistantMessage {
+  align-items: flex-start;
+}
+
+.userMessage {
+  justify-content: flex-end;
+}
+
+.avatar {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(21, 148, 125, .24);
+  border-radius: 9px;
+  background: rgba(226, 246, 241, .9);
+  color: #117b68;
+}
+
+.avatar svg {
+  width: 15px;
+}
+
+.messageBody {
+  max-width: calc(100% - 37px);
+  padding: 11px 12px;
+  border: 1px solid rgba(59, 113, 103, .17);
+  border-radius: 4px 13px 13px 13px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 5px 18px rgba(40, 85, 77, .05);
+}
+
+.userMessage .messageBody {
+  max-width: 84%;
+  border-color: rgba(17, 122, 103, .22);
+  border-radius: 13px 4px 13px 13px;
+  background: linear-gradient(145deg, #178c77, #107361);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(15, 115, 97, .14);
+}
+
+.messageTitle {
+  display: block;
+  margin-bottom: 7px;
+  color: #183a33;
+  font-size: .79rem;
+}
+
+.messageBody p {
+  margin: 0;
+  color: #46645e;
+  font-size: .73rem;
+  line-height: 1.55;
+}
+
+.messageBody p + p {
+  margin-top: 8px;
+}
+
+.userMessage .messageBody p {
+  color: #fff;
+}
+
+.messageBody ul {
+  display: grid;
+  gap: 5px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.messageBody li {
+  position: relative;
+  padding-left: 12px;
+  color: #46645e;
+  font-size: .7rem;
+  line-height: 1.4;
+}
+
+.messageBody li::before {
+  content: "";
+  position: absolute;
+  top: .55em;
+  left: 1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #20a68e;
+}
+
+.linkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.linkGrid a {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 22px 1fr 13px;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 7px;
+  border: 1px solid rgba(39, 120, 104, .2);
+  border-radius: 8px;
+  background: rgba(232, 248, 244, .72);
+  color: #1d5b4f;
+  text-decoration: none;
+}
+
+.linkGrid a:hover {
+  border-color: rgba(21, 148, 125, .42);
+  background: #f5fffc;
+}
+
+.linkGrid a > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(21, 148, 125, .09);
+}
+
+.linkGrid a svg {
+  width: 12px;
+}
+
+.linkGrid a > span svg {
+  width: 13px;
+}
+
+.linkGrid strong {
+  overflow: hidden;
+  font-size: .62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer {
+  display: grid;
+  grid-template-columns: 1fr 38px;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 12px 0;
+  padding: 5px 5px 5px 11px;
+  border: 1px solid rgba(46, 111, 98, .24);
+  border-radius: 13px;
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 5px 18px rgba(40, 85, 77, .05);
+}
+
+.composer:focus-within {
+  border-color: rgba(21, 148, 125, .5);
+  box-shadow: 0 0 0 3px rgba(21,148,125,.08);
+}
+
+.composer input {
+  min-width: 0;
+  height: 38px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #183a33;
+  font-size: .74rem;
+}
+
+.composer input::placeholder {
+  color: #78958f;
+}
+
+.composer button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: #168a75;
+  color: #fff;
+}
+
+.composer button:disabled {
+  background: #c6d8d3;
+  color: #edf4f2;
+}
+
+.composer button svg {
+  width: 16px;
+}
+
+.panelFooter {
+  padding: 8px 13px 10px;
+  color: #78958f;
+  font: 650 .55rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .04em;
+  text-align: center;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 560px) {
+  .launcher {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
+  }
+
+  .panel {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 66px);
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-height: min(76dvh, 720px);
+    border-radius: 16px;
+  }
+
+  .starters > div {
+    grid-template-columns: 1fr;
+  }
+
+  .starters button {
+    min-height: 42px;
+  }
+
+  .linkGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .linkGrid a {
+    grid-template-columns: 26px 1fr 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+
+  .launcher,
+  .starters button {
+    transition: none;
+  }
+}
